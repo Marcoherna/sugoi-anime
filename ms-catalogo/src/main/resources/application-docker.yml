@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db-catalogo:5432/${DB_NAME:sugoi_catalogo}
+
+logging:
+  level:
+    cl.sugoianime: INFO
+    org.hibernate.orm.jdbc.bind: WARN

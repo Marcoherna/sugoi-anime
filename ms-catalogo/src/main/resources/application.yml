@@ -1,0 +1,113 @@
+spring:
+  application:
+    name: ms-catalogo
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5434/sugoi_catalogo}
+    username: ${DB_USER:sugoi}
+    password: ${DB_PASSWORD:CAMBIAME_EN_TU_ENV_LOCAL}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      ddl-auto: validate        
+    open-in-view: false         # evita el antipatron de sesión abierta en la vista
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+        default_batch_fetch_size: 20
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=2000,expireAfterWrite=24h
+
+  threads:
+    virtual:
+      enabled: true             # Java 25: virtual threads para el servidor web
+
+  http:
+    client:
+      connect-timeout: 5s
+      read-timeout: 20s
+
+server:
+  port: 8081
+  shutdown: graceful
+  error:
+    include-stacktrace: never
+
+# ---------- Integraciones externas ----------
+jikan:
+  base-url: ${JIKAN_BASE_URL:https://api.jikan.moe/v4}
+  # Jikan limita a ~3 req/seg. 400ms deja margen de seguridad.
+  delay-entre-llamadas-ms: 400
+  paginas-por-sincronizacion: 5
+  sincronizacion-habilitada: ${JIKAN_SYNC_ENABLED:false}
+
+traduccion:
+  habilitada: ${TRADUCCION_ENABLED:false}
+  api-url: ${TRANSLATE_API_URL:https://libretranslate.com/translate}
+  api-key: ${TRANSLATE_API_KEY:}
+  idioma-destino: es
+
+# ---------- Media / CDN (RNF-07) ----------
+media:
+  cdn-domain: ${AWS_CLOUDFRONT_DOMAIN:}
+  # Fallback local mientras no exista CloudFront (desarrollo)
+  base-url-local: http://localhost:8081/media
+
+# ---------- Resiliencia (Riesgo R02) ----------
+resilience4j:
+  circuitbreaker:
+    instances:
+      jikan:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 60s
+        permitted-number-of-calls-in-half-open-state: 3
+  timelimiter:
+    instances:
+      jikan:
+        timeout-duration: 25s
+        cancel-running-future: true
+
+# ---------- Documentacion OpenAPI ----------
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    display-request-duration: true
+    try-it-out-enabled: true
+  default-produces-media-type: application/json
+  show-actuator: false
+
+# ---------- Observabilidad ----------
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+
+logging:
+  level:
+    cl.sugoianime: DEBUG
+    org.hibernate.orm.jdbc.bind: WARN   # muestra los parametros del SQL
