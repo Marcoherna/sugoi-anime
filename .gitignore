@@ -1,0 +1,29 @@
+# Secretos — Riesgo R06
+.env
+*.env
+!.env.example
+**/src/main/resources/application-local.yml
+*.pem
+*.p12
+aws-credentials*
+
+# Java / Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+*.class
+*.jar
+*.log
+
+# IntelliJ
+.idea/
+*.iml
+*.iws
+out/
+
+# Node
+node_modules/
+dist/
+.vite/
+
+# Docker
+volumes/

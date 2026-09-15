@@ -1,0 +1,67 @@
+name: sugoianime-dev
+
+services:
+  db-auth:
+    image: postgres:17-alpine
+    container_name: sugoi-db-auth
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_AUTH_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - vol-db-auth:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${DB_AUTH_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-catalogo:
+    image: postgres:17-alpine
+    container_name: sugoi-db-catalogo
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_CATALOGO_NAME}
+    ports:
+      - "5434:5432"
+    volumes:
+      - vol-db-catalogo:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${DB_CATALOGO_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-interacciones:
+    image: postgres:17-alpine
+    container_name: sugoi-db-interacciones
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_INTERACCIONES_NAME}
+    ports:
+      - "5435:5432"
+    volumes:
+      - vol-db-interacciones:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${DB_INTERACCIONES_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Esto es para los pagos
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: sugoi-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # consola web: guest/guest
+    profiles: ["pagos"]
+
+volumes:
+  vol-db-auth:
+  vol-db-catalogo:
+  vol-db-interacciones:
