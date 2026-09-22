@@ -1,0 +1,26 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+jikan:
+  base-url: http://localhost:9999
+  delay-entre-llamadas-ms: 0
+  paginas-por-sincronizacion: 1
+  sincronizacion-habilitada: false
+
+traduccion:
+  habilitada: false
+  api-url: http://localhost:9999/translate
+  api-key: ""
+  idioma-destino: es
+
+media:
+  cdn-domain: ""
+  base-url-local: http://localhost:8081/media
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
