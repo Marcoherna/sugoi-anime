@@ -1,0 +1,18 @@
+# Dentro de Docker los servicios se resuelven por nombre de contenedor,
+# no por localhost.
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - "http://localhost:5173"
+                  - "http://localhost"
+
+logging:
+  level:
+    cl.sugoianime: INFO
+    org.springframework.cloud.gateway: WARN
