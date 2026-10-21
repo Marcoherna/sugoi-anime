@@ -1,0 +1,11 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db-interacciones:5432/${DB_NAME:sugoi_interacciones}
+
+servicios:
+  catalogo-url: http://ms-catalogo:8081
+  auth-url: http://ms-auth:8082
+
+logging:
+  level:
+    cl.sugoianime: INFO

@@ -1,0 +1,111 @@
+spring:
+  application:
+    name: ms-interacciones
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5435/sugoi_interacciones}
+    username: ${DB_USER:sugoi}
+    password: ${DB_PASSWORD:CAMBIAME_EN_TU_ENV_LOCAL}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  cache:
+    type: caffeine
+
+  # Timeouts de los clientes HTTP hacia otros microservicios
+  http:
+    client:
+      connect-timeout: 3s
+      read-timeout: 10s
+
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8083
+  shutdown: graceful
+  error:
+    include-stacktrace: never
+
+# ---------- JWT: el MISMO secreto que ms-auth y el Gateway ----------
+jwt:
+  secret: ${JWT_SECRET}
+
+# ---------- Servicios internos ----------
+servicios:
+  catalogo-url: ${MS_CATALOGO_URI:http://localhost:8081}
+  auth-url: ${MS_AUTH_URI:http://localhost:8082}
+
+# ---------- Motor de recomendaciones (RF-07) ----------
+recomendaciones:
+  # Cantidad de recomendaciones que se guardan por perfil
+  top-n: 20
+  # Minimo de interacciones para que el perfil tenga senal suficiente
+  minimo-interacciones: 2
+  # Tamano de pagina al traer el catalogo completo desde ms-catalogo
+  tamano-lote-catalogo: 200
+  cron: "0 0 5 * * *"
+
+# ---------- Resiliencia ----------
+# LECCION APRENDIDA: sin el bloque timelimiter, Spring Cloud
+# CircuitBreaker aplica un timeout por defecto de 1 SEGUNDO que aborta
+# llamadas perfectamente sanas y abre el circuito sin motivo real.
+resilience4j:
+  circuitbreaker:
+    instances:
+      catalogo:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+      auth:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+  timelimiter:
+    instances:
+      catalogo:
+        timeout-duration: 15s
+        cancel-running-future: true
+      auth:
+        timeout-duration: 10s
+        cancel-running-future: true
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    cl.sugoianime: DEBUG
