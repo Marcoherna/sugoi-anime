@@ -1,0 +1,35 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+  http:
+    client:
+      connect-timeout: 2s
+      read-timeout: 5s
+
+jwt:
+  secret: dGVzdC1zZWNyZXQtc29sby1wYXJhLXBydWViYXMtbm8tdXNhci1lbi1wcm9kdWNjaW9uLWphbWFzLTEyMzQ1Njc4OTA=
+
+servicios:
+  catalogo-url: http://localhost:9998
+  auth-url: http://localhost:9999
+
+recomendaciones:
+  top-n: 20
+  minimo-interacciones: 2
+  tamano-lote-catalogo: 200
+  cron: "-"
+
+resilience4j:
+  timelimiter:
+    instances:
+      catalogo:
+        timeout-duration: 5s
+      auth:
+        timeout-duration: 5s
+
+logging:
+  level:
+    org.springframework.security: WARN
