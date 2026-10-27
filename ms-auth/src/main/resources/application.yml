@@ -1,0 +1,79 @@
+spring:
+  application:
+    name: ms-auth
+
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/sugoi_auth}
+    username: ${DB_USER:sugoi}
+    password: ${DB_PASSWORD:CAMBIAME_EN_TU_ENV_LOCAL}
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  port: 8082
+  shutdown: graceful
+  error:
+    include-stacktrace: never
+
+# ---------- JWT (RNF-05) ----------
+jwt:
+  # DEBE ser el MISMO valor que usa el Gateway.
+  # Genera con: openssl rand -base64 64 | tr -d '\n'
+  secret: ${JWT_SECRET}
+  emisor: sugoianime-auth
+  # Access token corto: si se filtra, la ventana de abuso es minima
+  access-token-duracion: PT15M
+  # Refresh token largo pero REVOCABLE (esta en BD)
+  refresh-token-duracion: P7D
+
+# ---------- Ley 19.628 ----------
+consentimiento:
+  # Al cambiar los terminos, sube esta version. Los usuarios que
+  # aceptaron la anterior quedan registrados con la version que firmaron.
+  version-vigente: "1.0"
+
+# ---------- Reglas de negocio ----------
+perfiles:
+  maximo-por-cuenta: 5
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    try-it-out-enabled: true
+  show-actuator: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    cl.sugoianime: DEBUG
+    org.springframework.security: INFO

@@ -1,0 +1,8 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://db-auth:5432/${DB_NAME:sugoi_auth}
+
+logging:
+  level:
+    cl.sugoianime: INFO
+    org.springframework.security: WARN
