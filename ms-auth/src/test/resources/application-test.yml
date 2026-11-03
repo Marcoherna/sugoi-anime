@@ -1,0 +1,23 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+
+jwt:
+  # Secreto FIJO solo para tests. Nunca uses este valor fuera de aqui.
+  secret: dGVzdC1zZWNyZXQtc29sby1wYXJhLXBydWViYXMtbm8tdXNhci1lbi1wcm9kdWNjaW9uLWphbWFzLTEyMzQ1Njc4OTA=
+  emisor: sugoianime-auth-test
+  access-token-duracion: PT15M
+  refresh-token-duracion: P7D
+
+consentimiento:
+  version-vigente: "1.0-test"
+
+perfiles:
+  maximo-por-cuenta: 5
+
+logging:
+  level:
+    org.springframework.security: WARN
