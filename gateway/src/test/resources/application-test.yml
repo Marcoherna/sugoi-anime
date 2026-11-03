@@ -1,0 +1,25 @@
+spring:
+  cloud:
+    gateway:
+      server:
+        webflux:
+          routes:
+            - id: test-route
+              uri: http://localhost:9999
+              predicates:
+                - Path=/api/interacciones/**
+              filters:
+                - StripPrefix=2
+
+jwt:
+  secret: dGVzdC1zZWNyZXQtc29sby1wYXJhLXBydWViYXMtbm8tdXNhci1lbi1wcm9kdWNjaW9uLWphbWFzLTEyMzQ1Njc4OTA=
+  emisor-esperado: sugoianime-auth-test
+
+springdoc:
+  api-docs:
+    enabled: false
+
+logging:
+  level:
+    org.springframework.cloud.gateway: WARN
+    org.springframework.security: WARN
