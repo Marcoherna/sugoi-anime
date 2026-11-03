@@ -143,13 +143,21 @@ flowchart TB
 - **Vista de Usuario:** Página dedicada "Mis Favoritos" (`/favoritos`) protegida por sesión y perfil activo.
 
 ### RF-07: Motor de Recomendaciones por Similitud de Coseno
-- **Filtrado Basado en Contenido (Content-Based Filtering):** Cada anime se representa como un vector binario en un espacio vectorial multidimensional de géneros.
+- **Filtrado Basado en Contenido (Content-Based Filtering):** Cada anime se representa como un vector binario (*One-Hot Encoding*) en un espacio vectorial multidimensional de géneros.
 - **Vector de Perfil:** El perfil de gustos del usuario se genera dinámicamente mediante la suma vectorial ponderada de los animes marcados como favoritos y los episodios completados.
 - **Métrica de Similitud de Coseno:** Se calcula el ángulo entre el vector del perfil $\mathbf{u}$ y el vector del anime $\mathbf{v}$:
   $$\text{similitud}(\mathbf{u}, \mathbf{v}) = \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\| \|\mathbf{v}\|}$$
   Esto prioriza la **dirección y preferencia temática** en lugar de la cantidad absoluta de animes vistos (evitando sesgos entre usuarios novatos y veteranos).
 - **Tratamiento del Arranque en Frío:** Si el perfil cuenta con menos de 2 interacciones, el sistema devuelve una lista vacía para no emitir sugerencias sin respaldo estadístico.
 - **Pre-cálculo & Regeneración:** Endpoints para consultar recomendaciones (`GET /api/interacciones/recomendaciones`) y forzar su regeneración inmediata (`POST /api/interacciones/recomendaciones/regenerar`).
+
+> [!NOTE]
+> **Decisión Arquitectónica (De Machine Learning Colaborativo a Modelo Vectorial por Similitud de Coseno):**
+> Si bien el alcance inicial del proyecto contemplaba un modelo predictivo de *Machine Learning* tradicional (filtrado colaborativo / entrenamiento supervisado), se optó por un motor determinista de **Filtrado Basado en Contenido con Similitud de Coseno** ([`RecomendacionService.java`](file:///home/maha/Proyectos/sugoi-anime/ms-interacciones/src/main/java/cl/sugoianime/msinteracciones/service/RecomendacionService.java)) por cuatro razones de ingeniería:
+> 1. **Mitigación del Arranque en Frío (*Cold Start*):** Los modelos de ML colaborativos requieren miles de usuarios e interacciones históricas para converger; el enfoque vectorial por contenido opera con precisión desde el primer usuario apenas registra 2 interacciones.
+> 2. **Explicabilidad y Determinismo:** A diferencia de un modelo de caja negra, cada puntaje recomendado es 100% trazable, auditable y verificable mediante pruebas unitarias deterministas.
+> 3. **Cumplimiento de la Ley N° 19.628 (Aislamiento y Derecho al Olvido):** Al calcular el vector únicamente con el historial del propio perfil sin entrenar un modelo global compartido, la eliminación de una cuenta o revocación de consentimiento surte efecto inmediato sin requerir reentrenamiento (*Machine Unlearning*).
+> 4. **Eficiencia Operacional en Microservicios:** Se ejecuta de forma nativa en Java 25 en pocos milisegundos sin requerir infraestructura adicional en Python/GPU ni pipelines externos de entrenamiento.
 
 ### RF-08: Gestión de Cuentas, Autenticación JWT y Consentimiento Auditable
 - **Registro con Evidencia Legal (`POST /api/auth/auth/registro`):** Crea la cuenta maestra con contraseña hasheada mediante **BCrypt (factor de costo 12)**, genera automáticamente un perfil de visualización inicial y registra tres entradas auditables de consentimiento (`TERMINOS_Y_CONDICIONES`, `TRATAMIENTO_DATOS` y el opcional `HISTORIAL_RECOMENDACIONES`) junto con la versión vigente de los términos, fecha exacta e IP de origen (`X-Forwarded-For`).
