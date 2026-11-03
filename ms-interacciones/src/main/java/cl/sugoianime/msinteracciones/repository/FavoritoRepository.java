@@ -25,6 +25,10 @@ public interface FavoritoRepository extends JpaRepository<Favorito, Long> {
     @Query("SELECT f.animeId FROM Favorito f WHERE f.perfilId = :perfilId")
     List<Long> findAnimeIdsByPerfilId(Long perfilId);
 
+    /** Perfiles con al menos un favorito para incluirlos en el calculo de recomendaciones. */
+    @Query("SELECT DISTINCT f.perfilId FROM Favorito f")
+    List<Long> findPerfilesConFavoritos();
+
     /** Limpieza de datos huerfanos tras eliminar un perfil en ms-auth. */
     void deleteByPerfilId(Long perfilId);
 }

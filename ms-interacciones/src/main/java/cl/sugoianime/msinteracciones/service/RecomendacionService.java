@@ -172,6 +172,7 @@ public class RecomendacionService {
         idsInteractuados.addAll(progresoRepository.findAnimeIdsVistos(perfilId));
 
         if (idsInteractuados.size() < minimoInteracciones) {
+            recomendacionRepository.deleteByPerfilId(perfilId);
             log.debug("Perfil {} con solo {} interacciones: senal insuficiente",
                     perfilId, idsInteractuados.size());
             return 0;
@@ -249,6 +250,7 @@ public class RecomendacionService {
         log.info("Espacio vectorial: {} generos", indiceGeneros.size());
 
         Set<Long> perfiles = new HashSet<>(progresoRepository.findPerfilesConActividad());
+        perfiles.addAll(favoritoRepository.findPerfilesConFavoritos());
         int total = 0;
 
         for (Long perfilId : perfiles) {
@@ -286,14 +288,18 @@ public class RecomendacionService {
     // CONSULTA
     // =================================================================
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<RecomendacionDTO> obtener(Long perfilId) {
 
         List<Recomendacion> recomendaciones =
                 recomendacionRepository.findByPerfilIdOrderByPosicionAsc(perfilId);
 
         if (recomendaciones.isEmpty()) {
-            return List.of();
+            int generadas = regenerar(perfilId);
+            if (generadas == 0) {
+                return List.of();
+            }
+            recomendaciones = recomendacionRepository.findByPerfilIdOrderByPosicionAsc(perfilId);
         }
 
         List<Long> ids = recomendaciones.stream().map(Recomendacion::getAnimeId).toList();

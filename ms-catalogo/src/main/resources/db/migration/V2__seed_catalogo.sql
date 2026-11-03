@@ -17,56 +17,56 @@ INSERT INTO genero (mal_id, nombre, nombre_es) VALUES
                                                    (36, 'Slice of Life', 'Recuentos de la Vida'),
                                                    (41, 'Suspense',      'Suspenso');
 
-INSERT INTO anime (mal_id, titulo, titulo_japones, sinopsis, sinopsis_es, anio, episodios, puntuacion, estado) VALUES
+INSERT INTO anime (mal_id, titulo, titulo_japones, sinopsis, sinopsis_es, anio, episodios, puntuacion, imagen_key, estado) VALUES
                                                                                                                    (16498, 'Attack on Titan', 'Shingeki no Kyojin',
                                                                                                                     'Humanity fights for survival against giant humanoid Titans behind massive walls.',
                                                                                                                     'La humanidad lucha por sobrevivir frente a titanes gigantes tras enormes murallas.',
-                                                                                                                    2013, 25, 8.54, 'FINALIZADO'),
+                                                                                                                    2013, 25, 8.54, 'https://cdn.myanimelist.net/images/anime/10/47347l.jpg', 'FINALIZADO'),
 
                                                                                                                    (5114, 'Fullmetal Alchemist: Brotherhood', 'Hagane no Renkinjutsushi',
                                                                                                                     'Two brothers search for the Philosopher''s Stone to restore their bodies.',
                                                                                                                     'Dos hermanos buscan la Piedra Filosofal para recuperar sus cuerpos.',
-                                                                                                                    2009, 64, 9.09, 'FINALIZADO'),
+                                                                                                                    2009, 64, 9.09, 'https://cdn.myanimelist.net/images/anime/1208/94745l.jpg', 'FINALIZADO'),
 
                                                                                                                    (9253, 'Steins;Gate', 'Steins;Gate',
                                                                                                                     'A group of friends discover a way to send messages to the past.',
                                                                                                                     'Un grupo de amigos descubre como enviar mensajes al pasado.',
-                                                                                                                    2011, 24, 9.07, 'FINALIZADO'),
+                                                                                                                    2011, 24, 9.07, 'https://cdn.myanimelist.net/images/anime/1935/127974l.jpg', 'FINALIZADO'),
 
                                                                                                                    (11061, 'Hunter x Hunter', 'Hunter x Hunter',
                                                                                                                     'A young boy searches for his father while becoming a licensed Hunter.',
                                                                                                                     'Un joven busca a su padre mientras se convierte en Cazador licenciado.',
-                                                                                                                    2011, 148, 9.03, 'FINALIZADO'),
+                                                                                                                    2011, 148, 9.03, 'https://cdn.myanimelist.net/images/anime/1337/99013l.jpg', 'FINALIZADO'),
 
                                                                                                                    (38000, 'Demon Slayer', 'Kimetsu no Yaiba',
                                                                                                                     'A boy becomes a demon slayer to avenge his family and cure his sister.',
                                                                                                                     'Un joven se convierte en cazador de demonios para vengar a su familia.',
-                                                                                                                    2019, 26, 8.49, 'FINALIZADO'),
+                                                                                                                    2019, 26, 8.49, 'https://cdn.myanimelist.net/images/anime/1286/99889l.jpg', 'FINALIZADO'),
 
                                                                                                                    (31964, 'My Hero Academia', 'Boku no Hero Academia',
                                                                                                                     'A boy born without superpowers dreams of becoming a hero.',
                                                                                                                     'Un joven sin superpoderes suena con convertirse en heroe.',
-                                                                                                                    2016, 13, 7.86, 'FINALIZADO'),
+                                                                                                                    2016, 13, 7.86, 'https://cdn.myanimelist.net/images/anime/10/78745l.jpg', 'FINALIZADO'),
 
                                                                                                                    (30276, 'One Punch Man', 'One Punch Man',
                                                                                                                     'A hero who can defeat any enemy with a single punch seeks a worthy opponent.',
                                                                                                                     'Un heroe que derrota a cualquier enemigo de un golpe busca un rival digno.',
-                                                                                                                    2015, 12, 8.49, 'FINALIZADO'),
+                                                                                                                    2015, 12, 8.49, 'https://cdn.myanimelist.net/images/anime/12/76049l.jpg', 'FINALIZADO'),
 
                                                                                                                    (32281, 'Your Name', 'Kimi no Na wa.',
                                                                                                                     'Two teenagers discover they are mysteriously swapping bodies.',
                                                                                                                     'Dos adolescentes descubren que intercambian cuerpos misteriosamente.',
-                                                                                                                    2016, 1, 8.83, 'FINALIZADO'),
+                                                                                                                    2016, 1, 8.83, 'https://cdn.myanimelist.net/images/anime/5/87048l.jpg', 'FINALIZADO'),
 
                                                                                                                    (52991, 'Frieren: Beyond Journey''s End', 'Sousou no Frieren',
                                                                                                                     'An elf mage reflects on mortality after her hero party disbands.',
                                                                                                                     'Una maga elfa reflexiona sobre la mortalidad tras disolverse su grupo.',
-                                                                                                                    2023, 28, 9.30, 'FINALIZADO'),
+                                                                                                                    2023, 28, 9.30, 'https://cdn.myanimelist.net/images/anime/1015/138006l.jpg', 'FINALIZADO'),
 
                                                                                                                    (51009, 'Jujutsu Kaisen 2nd Season', 'Jujutsu Kaisen 2nd Season',
                                                                                                                     'Sorcerers battle cursed spirits in modern Japan.',
                                                                                                                     'Hechiceros combaten espiritus malditos en el Japon moderno.',
-                                                                                                                    2023, 23, 8.72, 'FINALIZADO');
+                                                                                                                    2023, 23, 8.72, 'https://cdn.myanimelist.net/images/anime/1792/138022l.jpg', 'FINALIZADO');
 
 -- Relacion anime <-> genero
 INSERT INTO anime_genero (anime_id, genero_id)

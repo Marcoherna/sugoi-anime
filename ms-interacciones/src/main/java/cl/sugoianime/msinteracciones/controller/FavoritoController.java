@@ -4,6 +4,7 @@ import cl.sugoianime.msinteracciones.dto.FavoritoDTO;
 import cl.sugoianime.msinteracciones.exception.ErrorResponse;
 import cl.sugoianime.msinteracciones.security.PerfilGuard;
 import cl.sugoianime.msinteracciones.service.FavoritoService;
+import cl.sugoianime.msinteracciones.service.RecomendacionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -28,10 +29,14 @@ import java.util.Map;
 public class FavoritoController {
 
     private final FavoritoService favoritoService;
+    private final RecomendacionService recomendacionService;
     private final PerfilGuard perfilGuard;
 
-    public FavoritoController(FavoritoService favoritoService, PerfilGuard perfilGuard) {
+    public FavoritoController(FavoritoService favoritoService,
+                              RecomendacionService recomendacionService,
+                              PerfilGuard perfilGuard) {
         this.favoritoService = favoritoService;
+        this.recomendacionService = recomendacionService;
         this.perfilGuard = perfilGuard;
     }
 
@@ -77,8 +82,10 @@ public class FavoritoController {
 
         perfilGuard.verificarPropiedad(jwt, perfilId);
 
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(favoritoService.agregar(perfilGuard.usuarioIdDe(jwt), perfilId, animeId));
+        FavoritoDTO creado = favoritoService.agregar(perfilGuard.usuarioIdDe(jwt), perfilId, animeId);
+        recomendacionService.regenerar(perfilId);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
 
     @Operation(summary = "Quitar un anime de favoritos")
@@ -90,6 +97,7 @@ public class FavoritoController {
 
         perfilGuard.verificarPropiedad(jwt, perfilId);
         favoritoService.eliminar(perfilId, animeId);
+        recomendacionService.regenerar(perfilId);
         return ResponseEntity.noContent().build();
     }
 
