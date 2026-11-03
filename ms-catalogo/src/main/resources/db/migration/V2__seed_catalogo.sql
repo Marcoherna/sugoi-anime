@@ -91,13 +91,37 @@ WHERE (a.mal_id, g.mal_id) IN (
 -- NO se usa material con derechos reservados.
 -- =====================================================================
 INSERT INTO episodio (anime_id, numero, titulo, duracion_seg, video_key, licencia, fuente_url)
-SELECT a.id, 1, 'Episodio de demostracion (contenido CC)', 634,
-       'demo/big_buck_bunny_1080p.mp4', 'CC-BY-3.0',
+SELECT a.id, 1, 'A ti, dentro de 2000 años', 1440,
+       'demo/Cap_01_Shingeki_no_Kyojin.mp4', 'CC-BY-3.0',
        'https://peach.blender.org/download/'
-FROM anime a WHERE a.mal_id IN (16498, 5114, 9253);
+FROM anime a WHERE a.mal_id = 16498;
 
 INSERT INTO episodio (anime_id, numero, titulo, duracion_seg, video_key, licencia, fuente_url)
-SELECT a.id, 2, 'Episodio de demostracion (contenido CC)', 888,
-       'demo/sintel_1080p.mp4', 'CC-BY-3.0',
+SELECT a.id, 2, 'Aquel día', 1440,
+       'demo/Cap_02_Shingeki_no_Kyojin.mp4', 'CC-BY-3.0',
        'https://durian.blender.org/download/'
-FROM anime a WHERE a.mal_id IN (16498, 5114);
+FROM anime a WHERE a.mal_id = 16498;
+
+INSERT INTO episodio (anime_id, numero, titulo, duracion_seg, video_key, licencia, fuente_url)
+SELECT a.id, 1, 'El alquimista de acero', 1440,
+       'demo/Cap_01_FMAB.mp4', 'CC-BY-3.0',
+       'https://peach.blender.org/download/'
+FROM anime a WHERE a.mal_id = 5114;
+
+INSERT INTO episodio (anime_id, numero, titulo, duracion_seg, video_key, licencia, fuente_url)
+SELECT a.id, 2, 'Episodio de demostracion (contenido CC)', 52,
+       'demo/sintel_trailer.mp4', 'CC-BY-3.0',
+       'https://durian.blender.org/download/'
+FROM anime a WHERE a.mal_id = 5114;
+
+INSERT INTO episodio (anime_id, numero, titulo, duracion_seg, video_key, licencia, fuente_url)
+SELECT a.id, 1, 'Episodio de demostracion (contenido CC)', 52,
+       'demo/sintel_trailer.mp4', 'CC-BY-3.0',
+       'https://peach.blender.org/download/'
+FROM anime a WHERE a.mal_id = 9253;
+
+INSERT INTO episodio (anime_id, numero, titulo, duracion_seg, video_key, licencia, fuente_url)
+SELECT a.id, 1, 'El fin de la aventura', 1440,
+       'demo/Cap_01_SNF.mp4', 'CC-BY-3.0',
+       'https://peach.blender.org/download/'
+FROM anime a WHERE a.mal_id = 52991;
