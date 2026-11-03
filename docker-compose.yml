@@ -1,0 +1,143 @@
+name: sugoianime
+
+services:
+  # =================================================================
+  # BASES DE DATOS AISLADAS (RNF-02: Database-per-Service)
+  # Sin "ports": inalcanzables desde fuera de la red Docker.
+  # =================================================================
+  db-auth:
+    image: postgres:17-alpine
+    container_name: sugoi-db-auth
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_AUTH_NAME}
+    volumes:
+      - vol-db-auth:/var/lib/postgresql/data
+    networks: [sugoi-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${DB_AUTH_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-catalogo:
+    image: postgres:17-alpine
+    container_name: sugoi-db-catalogo
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_CATALOGO_NAME}
+    volumes:
+      - vol-db-catalogo:/var/lib/postgresql/data
+    networks: [sugoi-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${DB_CATALOGO_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-interacciones:
+    image: postgres:17-alpine
+    container_name: sugoi-db-interacciones
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${DB_INTERACCIONES_NAME}
+    volumes:
+      - vol-db-interacciones:/var/lib/postgresql/data
+    networks: [sugoi-net]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${DB_INTERACCIONES_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # =================================================================
+  # MICROSERVICIOS
+  # Ninguno expone puertos al host (RNF-04, Ley 21.459).
+  # =================================================================
+  ms-auth:
+    build: ./ms-auth
+    container_name: sugoi-ms-auth
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_NAME: ${DB_AUTH_NAME}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      db-auth: {condition: service_healthy}
+    networks: [sugoi-net]
+    restart: unless-stopped
+
+  ms-catalogo:
+    build: ./ms-catalogo
+    container_name: sugoi-ms-catalogo
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_NAME: ${DB_CATALOGO_NAME}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JIKAN_BASE_URL: ${JIKAN_BASE_URL}
+      JIKAN_SYNC_ENABLED: "false"
+      TRADUCCION_ENABLED: "false"
+      AWS_CLOUDFRONT_DOMAIN: ${AWS_CLOUDFRONT_DOMAIN}
+    depends_on:
+      db-catalogo: {condition: service_healthy}
+    networks: [sugoi-net]
+    restart: unless-stopped
+
+  ms-interacciones:
+    build: ./ms-interacciones
+    container_name: sugoi-ms-interacciones
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      DB_NAME: ${DB_INTERACCIONES_NAME}
+      DB_USER: ${POSTGRES_USER}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      db-interacciones: {condition: service_healthy}
+      ms-catalogo: {condition: service_started}
+      ms-auth: {condition: service_started}
+    networks: [sugoi-net]
+    restart: unless-stopped
+
+  # =================================================================
+  # GATEWAY: UNICO SERVICIO EXPUESTO
+  # =================================================================
+  gateway:
+    build: ./gateway
+    container_name: sugoi-gateway
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      JWT_SECRET: ${JWT_SECRET}
+      MS_AUTH_URI: http://ms-auth:8082
+      MS_CATALOGO_URI: http://ms-catalogo:8081
+      MS_INTERACCIONES_URI: http://ms-interacciones:8083
+    depends_on:
+      - ms-auth
+      - ms-catalogo
+      - ms-interacciones
+    networks: [sugoi-net]
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    container_name: sugoi-frontend
+    ports:
+      - "5173:80"
+    depends_on:
+      - gateway
+    networks: [ sugoi-net ]
+    restart: unless-stopped
+
+networks:
+  sugoi-net:
+    driver: bridge
+
+volumes:
+  vol-db-auth:
+  vol-db-catalogo:
+  vol-db-interacciones:
