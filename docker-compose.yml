@@ -53,6 +53,23 @@ services:
       timeout: 5s
       retries: 5
 
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: sugoi-libretranslate
+    environment:
+      LT_LOAD_ONLY: "en,es"
+      LT_UPDATE_MODELS: "false"
+    volumes:
+      - vol-libretranslate:/home/libretranslate/.local:rw
+    networks: [sugoi-net]
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
   # =================================================================
   # MICROSERVICIOS
   # Ninguno expone puertos al host (RNF-04, Ley 21.459).
@@ -81,10 +98,13 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       JIKAN_BASE_URL: ${JIKAN_BASE_URL}
       JIKAN_SYNC_ENABLED: "false"
-      TRADUCCION_ENABLED: "false"
+      TRADUCCION_ENABLED: ${TRADUCCION_ENABLED:-true}
+      TRANSLATE_API_URL: http://libretranslate:5000/translate
+      TRANSLATE_API_KEY: ${TRANSLATE_API_KEY:-}
       AWS_CLOUDFRONT_DOMAIN: ${AWS_CLOUDFRONT_DOMAIN}
     depends_on:
       db-catalogo: {condition: service_healthy}
+      libretranslate: {condition: service_started}
     networks: [sugoi-net]
     restart: unless-stopped
 
@@ -141,3 +161,4 @@ volumes:
   vol-db-auth:
   vol-db-catalogo:
   vol-db-interacciones:
+  vol-libretranslate:

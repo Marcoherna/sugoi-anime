@@ -56,8 +56,8 @@ jikan:
   sincronizacion-habilitada: ${JIKAN_SYNC_ENABLED:false}
 
 traduccion:
-  habilitada: ${TRADUCCION_ENABLED:false}
-  api-url: ${TRANSLATE_API_URL:https://libretranslate.com/translate}
+  habilitada: ${TRADUCCION_ENABLED:true}
+  api-url: ${TRANSLATE_API_URL:http://localhost:5000/translate}
   api-key: ${TRANSLATE_API_KEY:}
   idioma-destino: es
 

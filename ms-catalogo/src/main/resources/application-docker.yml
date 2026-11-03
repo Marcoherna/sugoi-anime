@@ -2,6 +2,10 @@ spring:
   datasource:
     url: jdbc:postgresql://db-catalogo:5432/${DB_NAME:sugoi_catalogo}
 
+traduccion:
+  habilitada: ${TRADUCCION_ENABLED:true}
+  api-url: ${TRANSLATE_API_URL:http://libretranslate:5000/translate}
+
 logging:
   level:
     cl.sugoianime: INFO

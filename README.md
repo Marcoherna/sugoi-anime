@@ -64,12 +64,12 @@ flowchart TB
         DB_AUTH[("db-auth<br>PostgreSQL 17<br>sugoi_auth")]
         DB_CAT[("db-catalogo<br>PostgreSQL 17<br>sugoi_catalogo")]
         DB_INT[("db-interacciones<br>PostgreSQL 17<br>sugoi_interacciones")]
+        TRANS["libretranslate (:5000)<br>Motor Neural Local (en -> es)"]
         RABBIT[("RabbitMQ 4<br>Perfil: pagos")]
     end
 
     subgraph Externos["Servicios Externos y Cloud"]
         JIKAN["Jikan API v4<br>(MyAnimeList)"]
-        TRANS["LibreTranslate API"]
         CLOUDFRONT["AWS CloudFront / S3<br>(CDN Multimedia)"]
     end
 
@@ -101,6 +101,7 @@ flowchart TB
 | **`ms-auth`** | `8082` | `8082` *(Dev)* / BD `5433` *(Dev)* | `sugoi_auth` (PostgreSQL 17) | Gestión de cuentas (BCrypt), emisión de JWT y rotación de Refresh Tokens, perfiles de visualización con defensa contra IDOR, y auditoría/eliminación de datos (Ley 19.628). |
 | **`ms-catalogo`** | `8081` | `8081` *(Dev)* / BD `5434` *(Dev)* | `sugoi_catalogo` (PostgreSQL 17) | Catálogo de anime, géneros, gestión de episodios, streaming CDN con trazabilidad de licencias (Ley 17.336), traducción L1/L2 y sincronización con Jikan API. |
 | **`ms-interacciones`** | `8083` | `8083` *(Dev)* / BD `5435` *(Dev)* | `sugoi_interacciones` (PostgreSQL 17) | Seguimiento de progreso de visualización, favoritos enriquecidos con degradación elegante y motor algebraico de recomendaciones por Similitud de Coseno. |
+| **`libretranslate`** | `5000` | Interno *(Prod)* / `5000` *(Dev)* | `vol-libretranslate` (Modelos `en,es`) | Motor local autoalojado de traducción neuronal inglés $\rightarrow$ español para sinopsis del catálogo (RF-05). |
 | **`rabbitmq`** *(opcional)* | `5672` | `5672 / 15672` *(Perfil `pagos`)* | RabbitMQ 4 Management | Mensajería asíncrona preparada para eventos de membresías y pagos. |
 
 ---

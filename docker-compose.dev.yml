@@ -52,6 +52,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # Motor de traduccion local (RF-05: en -> es)
+  libretranslate:
+    image: libretranslate/libretranslate:latest
+    container_name: sugoi-libretranslate
+    environment:
+      LT_LOAD_ONLY: "en,es"
+      LT_UPDATE_MODELS: "false"
+    ports:
+      - "5000:5000"
+    volumes:
+      - vol-libretranslate:/home/libretranslate/.local:rw
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "./venv/bin/python scripts/healthcheck.py"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
   # Esto es para los pagos
   rabbitmq:
     image: rabbitmq:4-management-alpine
@@ -65,3 +84,4 @@ volumes:
   vol-db-auth:
   vol-db-catalogo:
   vol-db-interacciones:
+  vol-libretranslate:
