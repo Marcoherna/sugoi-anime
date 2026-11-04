@@ -77,15 +77,16 @@ export default function App() {
             {/* Global Obsidian Neon Cinematic Footer */}
             <footer className="mt-16 border-t border-outline-variant/20 bg-surface-container-low/50 py-8">
                 <div className="max-w-[1440px] mx-auto px-margin md:px-margin-tablet lg:px-margin-desktop flex flex-col sm:flex-row items-center justify-between gap-4 text-caption text-on-surface-variant">
-                    <div className="flex items-center gap-2">
-                        <div className="w-5 h-5 rounded bg-primary/20 flex items-center justify-center">
-                            <span className="material-symbols-outlined text-primary text-xs">bolt</span>
-                        </div>
+                    <div className="flex items-center gap-2.5">
+                        <img
+                            src="/logo.png"
+                            alt="SugoiAnime"
+                            className="w-7 h-7 rounded-lg object-contain shadow-[0_0_10px_rgba(160,120,255,0.35)]"
+                        />
                         <span className="font-semibold text-on-surface">SugoiAnime</span>
                         <span>— Plataforma de Streaming en Español</span>
                     </div>
                     <div className="flex items-center gap-6">
-                        <span className="text-xs text-outline">Ley 17.336 · Ley 19.628 · Ley 21.459</span>
                         <span className="text-xs text-outline">© {new Date().getFullYear()} SugoiAnime</span>
                     </div>
                 </div>

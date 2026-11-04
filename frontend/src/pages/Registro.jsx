@@ -44,7 +44,12 @@ export default function Registro() {
             >
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
-                <div className="text-center space-y-1.5">
+                <div className="text-center space-y-2">
+                    <img
+                        src="/logo.png"
+                        alt="SugoiAnime"
+                        className="w-16 h-16 rounded-2xl object-contain mx-auto shadow-[0_0_24px_rgba(160,120,255,0.45)]"
+                    />
                     <h1 className="font-headline-xl text-2xl font-extrabold text-on-surface">
                         Crear cuenta en SugoiAnime
                     </h1>

@@ -38,9 +38,11 @@ export default function Login() {
                 <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
 
                 <div className="text-center space-y-2">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-primary to-primary-container flex items-center justify-center mx-auto shadow-[0_0_20px_rgba(160,120,255,0.4)]">
-                        <span className="material-symbols-outlined text-on-primary text-2xl font-bold">bolt</span>
-                    </div>
+                    <img
+                        src="/logo.png"
+                        alt="SugoiAnime"
+                        className="w-20 h-20 rounded-2xl object-contain mx-auto shadow-[0_0_24px_rgba(160,120,255,0.45)]"
+                    />
                     <h1 className="font-headline-xl text-2xl font-extrabold text-on-surface">
                         Iniciar sesión
                     </h1>

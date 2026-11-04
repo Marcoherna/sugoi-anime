@@ -77,9 +77,11 @@ export default function Home() {
             {!autenticado && (
                 <section className="mb-8 rounded-xl bg-gradient-to-r from-surface-container-low via-surface-container to-surface-container-low p-5 border border-outline-variant/25 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
                     <div className="flex items-center gap-3.5">
-                        <div className="w-10 h-10 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center text-primary shrink-0">
-                            <span className="material-symbols-outlined">bolt</span>
-                        </div>
+                        <img
+                            src="/logo.png"
+                            alt="SugoiAnime"
+                            className="w-11 h-11 rounded-xl object-contain shrink-0 shadow-[0_0_16px_rgba(160,120,255,0.4)]"
+                        />
                         <p className="text-body-md text-sm text-on-surface-variant">
                             <strong className="text-on-surface">Bienvenido a SugoiAnime.</strong> Puedes explorar el catálogo libremente o{' '}
                             <Link to="/registro" className="text-primary font-semibold hover:underline">
@@ -119,7 +121,7 @@ export default function Home() {
                                         </span>
                                     </div>
                                     <p className="text-body-md text-sm text-on-surface-variant mt-1">
-                                        Marca al menos dos animes como favoritos para recibir recomendaciones personalizadas con similitud de coseno (TF-IDF).
+                                        Marca al menos dos animes como favoritos para recibir recomendaciones personalizadas.
                                     </p>
                                 </div>
                             </div>
@@ -137,7 +139,7 @@ export default function Home() {
                 recomendaciones.length > 0 && (
                     <FilaAnimes
                         titulo={`Recomendados para ${perfilActivo?.nombre || 'ti'}`}
-                        subtitulo="Según tus gustos (Similitud de Coseno TF-IDF)"
+                        subtitulo="Según tus gustos"
                         icono="auto_awesome"
                         colorIcono="text-primary"
                         animes={recomendaciones}

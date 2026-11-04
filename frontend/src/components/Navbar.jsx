@@ -23,10 +23,12 @@ export default function Navbar() {
             <div className="max-w-[1440px] mx-auto h-full px-margin md:px-margin-tablet lg:px-margin-desktop flex items-center justify-between gap-4">
                 {/* Brand & Primary Nav */}
                 <div className="flex items-center gap-6 lg:gap-8">
-                    <Link to="/" className="flex items-center gap-2 group">
-                        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-container flex items-center justify-center shadow-[0_0_15px_rgba(160,120,255,0.4)] group-hover:scale-105 transition-transform">
-                            <span className="material-symbols-outlined text-on-primary text-xl font-bold">bolt</span>
-                        </div>
+                    <Link to="/" className="flex items-center gap-2.5 group">
+                        <img
+                            src="/logo.png"
+                            alt="SugoiAnime Logo"
+                            className="w-10 h-10 rounded-xl object-contain shadow-[0_0_16px_rgba(160,120,255,0.45)] group-hover:scale-105 transition-transform"
+                        />
                         <span className="font-headline-xl text-xl tracking-tight font-extrabold text-on-surface">
                             Sugoi<span className="text-primary">Anime</span>
                         </span>
