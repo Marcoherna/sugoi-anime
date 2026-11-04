@@ -16,6 +16,7 @@ export default function Admin() {
 
     // --- Estado Series ---
     const [animes, setAnimes] = useState([])
+    const [generosCatalogo, setGenerosCatalogo] = useState([])
     const [editandoAnimeId, setEditandoAnimeId] = useState(null)
     const [mostrarFormManual, setMostrarFormManual] = useState(false)
     const [nombreBusquedaJikan, setNombreBusquedaJikan] = useState('')
@@ -26,14 +27,14 @@ export default function Admin() {
     const [ordenSeriesScore, setOrdenSeriesScore] = useState(true)
     const [formAnime, setFormAnime] = useState({
         titulo: '',
-        tituloOriginal: '',
+        tituloJapones: '',
         sinopsis: '',
-        imagenUrl: '',
+        imagenKey: '',
         anio: 2024,
-        estado: 'En emisión',
-        numeroEpisodios: 12,
+        estado: 'EN_EMISION',
+        episodios: 12,
         puntuacion: 8.0,
-        generosTexto: 'Acción, Fantasía',
+        generoIds: [],
     })
 
     // --- Estado Capítulos y S3 ---
@@ -44,10 +45,11 @@ export default function Admin() {
     const [subiendoVideo, setSubiendoVideo] = useState(false)
     const [autocompletandoCapitulo, setAutocompletandoCapitulo] = useState(false)
     const [capituloAutocompletado, setCapituloAutocompletado] = useState(false)
+    const [totalEpisodiosSugeridos, setTotalEpisodiosSugeridos] = useState(24)
     const [formEpisodio, setFormEpisodio] = useState({
         numero: 1,
         titulo: '',
-        duracionSegundos: 1440,
+        duracionSeg: 1440,
         videoKey: '',
         licencia: 'CC-BY-3.0',
         fuenteUrl: '',
@@ -71,13 +73,15 @@ export default function Admin() {
         setCargando(true)
         setError(null)
         try {
-            const [paginaAnimes, listaUsuarios, listaS3] = await Promise.all([
+            const [paginaAnimes, listaGeneros, listaUsuarios, listaS3] = await Promise.all([
                 catalogoApi.listar({ page: 0, size: 100, sort: 'id,desc' }),
+                catalogoApi.generos().catch(() => []),
                 adminApi.listarUsuarios().catch(() => []),
                 adminApi.listarVideosS3().catch(() => []),
             ])
             const listaA = paginaAnimes?.contenido || paginaAnimes?.content || []
             setAnimes(listaA)
+            setGenerosCatalogo(listaGeneros || [])
             if (listaA.length > 0 && !animeSeleccionadoId) {
                 setAnimeSeleccionadoId(String(listaA[0].id))
             }
@@ -115,18 +119,22 @@ export default function Admin() {
         try {
             const sugerencia = await adminApi.sugerirEpisodio(targetAnimeId, num)
             if (sugerencia) {
+                if (sugerencia.totalEpisodiosSerie) {
+                    setTotalEpisodiosSugeridos(sugerencia.totalEpisodiosSerie)
+                }
                 setFormEpisodio((prev) => ({
                     ...prev,
                     numero: num,
                     titulo: sugerencia.titulo || `Episodio ${num}`,
-                    duracionSegundos: sugerencia.duracionSegundos || 1440,
+                    duracionSeg: sugerencia.duracionSeg ?? sugerencia.duracionSegundos ?? 1440,
                     licencia: sugerencia.licencia || 'CC-BY-3.0',
                     fuenteUrl: sugerencia.fuenteUrl || '',
+                    videoKey: prev.videoKey || sugerencia.videoKey || '',
                 }))
                 setCapituloAutocompletado(true)
             }
         } catch {
-            // Si no se encuentra en la API externa, permite llenado manual
+            // Permite llenado manual si falla la consulta externa
         } finally {
             setAutocompletandoCapitulo(false)
         }
@@ -147,8 +155,10 @@ export default function Admin() {
         setImportandoJikan(true)
         setError(null)
         try {
-            const creado = await adminApi.importarAnimePorNombre(nombreBusquedaJikan.trim())
-            mostrarAviso(`Serie "${creado.titulo}" importada automáticamente desde la API con todos sus datos.`)
+            const creado = await adminApi.importarPorNombre(nombreBusquedaJikan.trim())
+            mostrarAviso(
+                `Serie "${creado.titulo}" importada automáticamente desde la API con todos sus datos.`
+            )
             setNombreBusquedaJikan('')
             setResultadosJikan([])
             await cargarTodo()
@@ -178,19 +188,13 @@ export default function Admin() {
     }
 
     async function importarCandidatoJikan(candidato) {
+        setImportandoJikan(true)
         setError(null)
         try {
-            const payload = {
-                malId: candidato.malId,
-                titulo: candidato.titulo,
-                sinopsis: candidato.sinopsis,
-                imagenUrl: candidato.imagenUrl,
-                anio: candidato.anio || 2024,
-                estado: candidato.estado || 'Finalizado',
-                puntuacion: Number(candidato.puntuacion || 8.0),
-                generos: candidato.generos || [],
-            }
-            const creado = await adminApi.crearAnime(payload)
+            const malId = candidato.mal_id ?? candidato.malId
+            const creado = malId
+                ? await adminApi.importarPorMalId(malId)
+                : await adminApi.importarPorNombre(candidato.title || candidato.titulo)
             mostrarAviso(`Serie "${creado.titulo}" agregada exitosamente al catálogo.`)
             setNombreBusquedaJikan('')
             setResultadosJikan([])
@@ -198,6 +202,8 @@ export default function Admin() {
             setAnimeSeleccionadoId(String(creado.id))
         } catch (err) {
             setError(err.message || 'Error al agregar la serie seleccionada')
+        } finally {
+            setImportandoJikan(false)
         }
     }
 
@@ -206,17 +212,14 @@ export default function Admin() {
         setError(null)
         const payload = {
             titulo: formAnime.titulo,
-            tituloOriginal: formAnime.tituloOriginal,
+            tituloJapones: formAnime.tituloJapones,
             sinopsis: formAnime.sinopsis,
-            imagenUrl: formAnime.imagenUrl,
+            imagenKey: formAnime.imagenKey,
             anio: Number(formAnime.anio),
             estado: formAnime.estado,
-            numeroEpisodios: Number(formAnime.numeroEpisodios),
+            episodios: Number(formAnime.episodios),
             puntuacion: Number(formAnime.puntuacion),
-            generos: formAnime.generosTexto
-                .split(',')
-                .map((g) => g.trim())
-                .filter(Boolean),
+            generoIds: formAnime.generoIds,
         }
 
         try {
@@ -235,22 +238,35 @@ export default function Admin() {
         }
     }
 
-    function seleccionarParaEditar(anime) {
+    async function seleccionarParaEditar(anime) {
         setEditandoAnimeId(anime.id)
         setMostrarFormManual(true)
-        setFormAnime({
-            titulo: anime.titulo || '',
-            tituloOriginal: anime.tituloOriginal || '',
-            sinopsis: anime.sinopsis || '',
-            imagenUrl: anime.imagenUrl || '',
-            anio: anime.anio || 2024,
-            estado: anime.estado || 'Finalizado',
-            numeroEpisodios: anime.numeroEpisodios || 12,
-            puntuacion: anime.puntuacion || 8.0,
-            generosTexto: Array.isArray(anime.generos)
-                ? anime.generos.map((g) => (typeof g === 'string' ? g : g.nombre)).join(', ')
-                : '',
-        })
+        try {
+            const det = await catalogoApi.detalle(anime.id)
+            setFormAnime({
+                titulo: det.titulo || anime.titulo || '',
+                tituloJapones: det.tituloJapones || '',
+                sinopsis: det.sinopsis || '',
+                imagenKey: det.imagenUrl || anime.imagenUrl || '',
+                anio: det.anio || anime.anio || 2024,
+                estado: det.estado || 'FINALIZADO',
+                episodios: det.episodios || 12,
+                puntuacion: det.puntuacion || anime.puntuacion || 8.0,
+                generoIds: (det.generos || anime.generos || []).map((g) => g.id).filter(Boolean),
+            })
+        } catch {
+            setFormAnime({
+                titulo: anime.titulo || '',
+                tituloJapones: '',
+                sinopsis: '',
+                imagenKey: anime.imagenUrl || '',
+                anio: anime.anio || 2024,
+                estado: 'FINALIZADO',
+                episodios: 12,
+                puntuacion: anime.puntuacion || 8.0,
+                generoIds: (anime.generos || []).map((g) => g.id).filter(Boolean),
+            })
+        }
         window.scrollTo({ top: 0, behavior: 'smooth' })
     }
 
@@ -259,14 +275,26 @@ export default function Admin() {
         setMostrarFormManual(false)
         setFormAnime({
             titulo: '',
-            tituloOriginal: '',
+            tituloJapones: '',
             sinopsis: '',
-            imagenUrl: '',
+            imagenKey: '',
             anio: 2024,
-            estado: 'En emisión',
-            numeroEpisodios: 12,
+            estado: 'EN_EMISION',
+            episodios: 12,
             puntuacion: 8.0,
-            generosTexto: 'Acción, Fantasía',
+            generoIds: [],
+        })
+    }
+
+    function toggleGeneroId(id) {
+        setFormAnime((prev) => {
+            const existe = prev.generoIds.includes(id)
+            return {
+                ...prev,
+                generoIds: existe
+                    ? prev.generoIds.filter((g) => g !== id)
+                    : [...prev.generoIds, id],
+            }
         })
     }
 
@@ -293,7 +321,7 @@ export default function Admin() {
         setSubiendoVideo(true)
         setError(null)
         try {
-            const res = await adminApi.subirVideoS3(archivoVideo, 'catalogo')
+            const res = await adminApi.subirVideoS3(archivoVideo, 'demo')
             setFormEpisodio((prev) => ({ ...prev, videoKey: res.key }))
             mostrarAviso(`Video subido a AWS S3: ${res.key}`)
             const listaS3 = await adminApi.listarVideosS3().catch(() => [])
@@ -317,10 +345,11 @@ export default function Admin() {
             return
         }
         try {
-            await adminApi.crearEpisodio(animeSeleccionadoId, {
+            await adminApi.guardarEpisodio({
+                animeId: Number(animeSeleccionadoId),
                 numero: Number(formEpisodio.numero),
                 titulo: formEpisodio.titulo,
-                duracionSegundos: Number(formEpisodio.duracionSegundos),
+                duracionSeg: Number(formEpisodio.duracionSeg),
                 videoKey: formEpisodio.videoKey,
                 licencia: formEpisodio.licencia,
                 fuenteUrl: formEpisodio.fuenteUrl,
@@ -353,15 +382,18 @@ export default function Admin() {
         try {
             const actualizado = await adminApi.actualizarUsuario(u.id, { activo: !u.activo })
             setUsuarios((prev) => prev.map((item) => (item.id === u.id ? actualizado : item)))
-            mostrarAviso(`Cuenta ${actualizado.email} ${actualizado.activo ? 'activada' : 'bloqueada'}.`)
+            mostrarAviso(
+                `Cuenta ${actualizado.email} ${actualizado.activo ? 'activada' : 'bloqueada'}.`
+            )
         } catch (err) {
             setError(err.message)
         }
     }
 
     async function alternarRolAdmin(u) {
-        const tieneAdmin = u.roles?.includes('ROLE_ADMIN')
-        const nuevosRoles = tieneAdmin ? ['ROLE_USUARIO'] : ['ROLE_USUARIO', 'ROLE_ADMIN']
+        const tieneAdmin =
+            u.roles?.includes('ADMIN') || u.roles?.includes('ROLE_ADMIN')
+        const nuevosRoles = tieneAdmin ? ['USUARIO'] : ['USUARIO', 'ADMIN']
         try {
             const actualizado = await adminApi.actualizarUsuario(u.id, { roles: nuevosRoles })
             setUsuarios((prev) => prev.map((item) => (item.id === u.id ? actualizado : item)))
@@ -374,7 +406,9 @@ export default function Admin() {
     async function alternarSuscripcion(u) {
         const nuevoTipo = u.tipoSuscripcion === 'PREMIUM' ? 'GRATUITA' : 'PREMIUM'
         try {
-            const actualizado = await adminApi.actualizarUsuario(u.id, { tipoSuscripcion: nuevoTipo })
+            const actualizado = await adminApi.actualizarUsuario(u.id, {
+                tipoSuscripcion: nuevoTipo,
+            })
             setUsuarios((prev) => prev.map((item) => (item.id === u.id ? actualizado : item)))
             mostrarAviso(`Suscripción de ${actualizado.email} cambiada a ${nuevoTipo}.`)
         } catch (err) {
@@ -398,7 +432,9 @@ export default function Admin() {
         const q = filtroSeries.trim().toLowerCase()
         const filtrados = animes.filter((a) => !q || (a.titulo || '').toLowerCase().includes(q))
         if (ordenSeriesScore) {
-            return [...filtrados].sort((a, b) => Number(b.puntuacion || 0) - Number(a.puntuacion || 0))
+            return [...filtrados].sort(
+                (a, b) => Number(b.puntuacion || 0) - Number(a.puntuacion || 0)
+            )
         }
         return filtrados
     }, [animes, filtroSeries, ordenSeriesScore])
@@ -411,11 +447,19 @@ export default function Admin() {
     const usuariosFiltrados = useMemo(() => {
         const q = busquedaUsuario.trim().toLowerCase()
         return usuarios.filter((u) => {
-            if (q && !(u.nombre || '').toLowerCase().includes(q) && !(u.email || '').toLowerCase().includes(q)) {
+            if (
+                q &&
+                !(u.nombre || '').toLowerCase().includes(q) &&
+                !(u.email || '').toLowerCase().includes(q)
+            ) {
                 return false
             }
-            if (filtroRol && !(u.roles || []).includes(filtroRol)) {
-                return false
+            if (filtroRol) {
+                const limpio = filtroRol.replace('ROLE_', '')
+                const tiene =
+                    (u.roles || []).includes(limpio) ||
+                    (u.roles || []).includes(`ROLE_${limpio}`)
+                if (!tiene) return false
             }
             if (filtroPlan && u.tipoSuscripcion !== filtroPlan) {
                 return false
@@ -427,8 +471,13 @@ export default function Admin() {
     const kpiUsuarios = useMemo(() => {
         const total = usuarios.length
         const premium = usuarios.filter((u) => u.tipoSuscripcion === 'PREMIUM').length
-        const admins = usuarios.filter((u) => u.roles?.includes('ROLE_ADMIN')).length
-        const perfiles = usuarios.reduce((acc, u) => acc + Number(u.cantidadPerfiles || 0), 0)
+        const admins = usuarios.filter(
+            (u) => u.roles?.includes('ADMIN') || u.roles?.includes('ROLE_ADMIN')
+        ).length
+        const perfiles = usuarios.reduce(
+            (acc, u) => acc + Number(u.cantidadPerfiles || 0),
+            0
+        )
         return { total, premium, admins, perfiles }
     }, [usuarios])
 
@@ -583,7 +632,10 @@ export default function Admin() {
                             </div>
 
                             {/* Search & Action Row */}
-                            <form onSubmit={importarDirectoPorNombre} className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3">
+                            <form
+                                onSubmit={importarDirectoPorNombre}
+                                className="flex flex-col lg:flex-row items-stretch lg:items-center gap-3"
+                            >
                                 <div className="relative flex-1">
                                     <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-[20px]">
                                         search
@@ -621,7 +673,7 @@ export default function Admin() {
                                 </div>
                             </form>
 
-                            {/*Resultados de coincidencias si el usuario pulsó "Elegir entre coincidencias"*/}
+                            {/* Resultados de coincidencias */}
                             {resultadosJikan.length > 0 && (
                                 <div className="mt-5 p-4 rounded-xl bg-surface-container border border-outline-variant/30">
                                     <div className="flex items-center justify-between mb-3">
@@ -637,36 +689,51 @@ export default function Admin() {
                                         </button>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {resultadosJikan.map((cand) => (
-                                            <div
-                                                key={cand.malId}
-                                                className="flex items-center justify-between gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant/20"
-                                            >
-                                                <div className="flex items-center gap-3 min-w-0">
-                                                    <img
-                                                        src={cand.imagenUrl}
-                                                        alt={cand.titulo}
-                                                        className="w-12 h-16 object-cover rounded-lg shrink-0"
-                                                    />
-                                                    <div className="min-w-0">
-                                                        <p className="font-title-card text-sm font-bold text-on-surface truncate">
-                                                            {cand.titulo}
-                                                        </p>
-                                                        <p className="text-caption text-on-surface-variant">
-                                                            {cand.anio || '—'} · ★ {cand.puntuacion || '—'} ·{' '}
-                                                            {(cand.generos || []).slice(0, 3).join(', ')}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    onClick={() => importarCandidatoJikan(cand)}
-                                                    className="px-3.5 py-2 rounded-lg bg-primary text-on-primary font-bold text-xs shrink-0 hover:brightness-110 transition-all"
+                                        {resultadosJikan.map((cand) => {
+                                            const malId = cand.mal_id ?? cand.malId
+                                            const tituloCand = cand.title || cand.titulo
+                                            const imgCand =
+                                                cand.images?.jpg?.large_image_url ||
+                                                cand.images?.jpg?.image_url ||
+                                                cand.imagenUrl
+                                            const anioCand =
+                                                cand.aired?.prop?.from?.year || cand.anio || '—'
+                                            const scoreCand = cand.score ?? cand.puntuacion ?? '—'
+                                            const epsCand = cand.episodes ?? cand.episodios ?? '?'
+
+                                            return (
+                                                <div
+                                                    key={malId || tituloCand}
+                                                    className="flex items-center justify-between gap-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant/20"
                                                 >
-                                                    Importar
-                                                </button>
-                                            </div>
-                                        ))}
+                                                    <div className="flex items-center gap-3 min-w-0">
+                                                        {imgCand && (
+                                                            <img
+                                                                src={imgCand}
+                                                                alt={tituloCand}
+                                                                className="w-12 h-16 object-cover rounded-lg shrink-0"
+                                                            />
+                                                        )}
+                                                        <div className="min-w-0">
+                                                            <p className="font-title-card text-sm font-bold text-on-surface truncate">
+                                                                {tituloCand}
+                                                            </p>
+                                                            <p className="text-caption text-on-surface-variant">
+                                                                {anioCand} · {epsCand} eps · ★ {scoreCand}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        disabled={importandoJikan}
+                                                        onClick={() => importarCandidatoJikan(cand)}
+                                                        className="px-3.5 py-2 rounded-lg bg-primary text-on-primary font-bold text-xs shrink-0 hover:brightness-110 disabled:opacity-40 transition-all"
+                                                    >
+                                                        Importar
+                                                    </button>
+                                                </div>
+                                            )
+                                        })}
                                     </div>
                                 </div>
                             )}
@@ -691,9 +758,11 @@ export default function Admin() {
                                         type="button"
                                         onClick={() =>
                                             adminApi
-                                                .traducirSinopsis()
-                                                .then((r) => {
-                                                    mostrarAviso(`Sinopsis traducidas: ${r.traducidas}`)
+                                                .traducirPendientes()
+                                                .then(() => {
+                                                    mostrarAviso(
+                                                        'Proceso de traducción de sinopsis ejecutado correctamente.'
+                                                    )
                                                     cargarTodo()
                                                 })
                                                 .catch((e) => setError(e.message))
@@ -715,7 +784,9 @@ export default function Admin() {
                                     className="mt-6 pt-6 border-t border-outline-variant/30 space-y-4"
                                 >
                                     <h3 className="font-title-card text-lg font-bold text-on-surface">
-                                        {editandoAnimeId ? `Editando serie #${editandoAnimeId}` : 'Crear serie manualmente'}
+                                        {editandoAnimeId
+                                            ? `Editando serie #${editandoAnimeId}`
+                                            : 'Crear serie manualmente'}
                                     </h3>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                         <div>
@@ -726,33 +797,38 @@ export default function Admin() {
                                                 type="text"
                                                 required
                                                 value={formAnime.titulo}
-                                                onChange={(e) => setFormAnime({ ...formAnime, titulo: e.target.value })}
-                                                className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface text-label-md"
-                                            />
-                                        </div>
-                                        <div>
-                                            <label className="text-label-sm text-on-surface-variant uppercase block mb-1">
-                                                URL de Portada (imagenUrl)
-                                            </label>
-                                            <input
-                                                type="url"
-                                                required
-                                                value={formAnime.imagenUrl}
                                                 onChange={(e) =>
-                                                    setFormAnime({ ...formAnime, imagenUrl: e.target.value })
+                                                    setFormAnime({ ...formAnime, titulo: e.target.value })
                                                 }
                                                 className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface text-label-md"
                                             />
                                         </div>
                                         <div>
                                             <label className="text-label-sm text-on-surface-variant uppercase block mb-1">
-                                                Géneros (separados por coma)
+                                                Título Japonés (opcional)
                                             </label>
                                             <input
                                                 type="text"
-                                                value={formAnime.generosTexto}
+                                                value={formAnime.tituloJapones}
                                                 onChange={(e) =>
-                                                    setFormAnime({ ...formAnime, generosTexto: e.target.value })
+                                                    setFormAnime({
+                                                        ...formAnime,
+                                                        tituloJapones: e.target.value,
+                                                    })
+                                                }
+                                                className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface text-label-md"
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-label-sm text-on-surface-variant uppercase block mb-1">
+                                                URL de Portada (imagenKey)
+                                            </label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={formAnime.imagenKey}
+                                                onChange={(e) =>
+                                                    setFormAnime({ ...formAnime, imagenKey: e.target.value })
                                                 }
                                                 className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface text-label-md"
                                             />
@@ -764,7 +840,9 @@ export default function Admin() {
                                             <input
                                                 type="number"
                                                 value={formAnime.anio}
-                                                onChange={(e) => setFormAnime({ ...formAnime, anio: e.target.value })}
+                                                onChange={(e) =>
+                                                    setFormAnime({ ...formAnime, anio: e.target.value })
+                                                }
                                                 className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface text-label-md"
                                             />
                                         </div>
@@ -774,21 +852,24 @@ export default function Admin() {
                                             </label>
                                             <select
                                                 value={formAnime.estado}
-                                                onChange={(e) => setFormAnime({ ...formAnime, estado: e.target.value })}
+                                                onChange={(e) =>
+                                                    setFormAnime({ ...formAnime, estado: e.target.value })
+                                                }
                                                 className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface text-label-md"
                                             >
-                                                <option value="En emisión">En emisión</option>
-                                                <option value="Finalizado">Finalizado</option>
+                                                <option value="EN_EMISION">EN_EMISION</option>
+                                                <option value="FINALIZADO">FINALIZADO</option>
+                                                <option value="PROXIMAMENTE">PROXIMAMENTE</option>
                                             </select>
                                         </div>
                                         <div>
                                             <label className="text-label-sm text-on-surface-variant uppercase block mb-1">
-                                                Puntuación (1 a 10)
+                                                Puntuación (0 a 10)
                                             </label>
                                             <input
                                                 type="number"
-                                                step="0.1"
-                                                min="1"
+                                                step="0.01"
+                                                min="0"
                                                 max="10"
                                                 value={formAnime.puntuacion}
                                                 onChange={(e) =>
@@ -798,6 +879,34 @@ export default function Admin() {
                                             />
                                         </div>
                                     </div>
+
+                                    {generosCatalogo.length > 0 && (
+                                        <div>
+                                            <label className="text-label-sm text-on-surface-variant uppercase block mb-2">
+                                                Géneros
+                                            </label>
+                                            <div className="flex flex-wrap gap-2">
+                                                {generosCatalogo.map((g) => {
+                                                    const activo = formAnime.generoIds.includes(g.id)
+                                                    return (
+                                                        <button
+                                                            key={g.id}
+                                                            type="button"
+                                                            onClick={() => toggleGeneroId(g.id)}
+                                                            className={`px-3 py-1 rounded-lg text-xs font-medium border transition-all ${
+                                                                activo
+                                                                    ? 'bg-primary text-on-primary border-primary font-bold'
+                                                                    : 'bg-surface-container-lowest text-on-surface-variant border-outline-variant/40'
+                                                            }`}
+                                                        >
+                                                            {g.nombre}
+                                                        </button>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     <div>
                                         <label className="text-label-sm text-on-surface-variant uppercase block mb-1">
                                             Sinopsis en español
@@ -806,7 +915,9 @@ export default function Admin() {
                                             rows={3}
                                             required
                                             value={formAnime.sinopsis}
-                                            onChange={(e) => setFormAnime({ ...formAnime, sinopsis: e.target.value })}
+                                            onChange={(e) =>
+                                                setFormAnime({ ...formAnime, sinopsis: e.target.value })
+                                            }
                                             className="w-full px-3.5 py-2.5 rounded-lg bg-surface-container-lowest border border-outline-variant/40 text-on-surface text-label-md"
                                         />
                                     </div>
@@ -832,7 +943,6 @@ export default function Admin() {
 
                     {/* CATALOG SERIES TABLE SECTION */}
                     <section className="rounded-2xl bg-surface-container-low border border-outline-variant/25 shadow-2xl overflow-hidden">
-                        {/* Table Header Bar */}
                         <div className="p-6 border-b border-outline-variant/20 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div>
                                 <h2 className="font-headline-xl text-xl font-bold text-on-surface">
@@ -869,7 +979,6 @@ export default function Admin() {
                             </div>
                         </div>
 
-                        {/* Responsive Table Wrapper */}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
@@ -906,7 +1015,9 @@ export default function Admin() {
                                                 <div className="text-caption text-outline mt-0.5 flex items-center gap-2">
                                                     <span>ID #{a.id}</span>
                                                     <span>•</span>
-                                                    <span className="text-emerald-400">{a.estado || 'Publicado'}</span>
+                                                    <span className="text-emerald-400">
+                                                        {a.estado || 'Publicado'}
+                                                    </span>
                                                 </div>
                                             </td>
                                             <td className="py-3.5 px-3 text-on-surface-variant font-medium">
@@ -936,7 +1047,9 @@ export default function Admin() {
                                                         onClick={() => seleccionarParaEditar(a)}
                                                         className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-surface-container-highest hover:bg-surface-bright text-on-surface text-caption font-medium transition-colors"
                                                     >
-                                                        <span className="material-symbols-outlined text-[15px]">edit</span>
+                                                        <span className="material-symbols-outlined text-[15px]">
+                                                            edit
+                                                        </span>
                                                         <span>Editar</span>
                                                     </button>
                                                     <button
@@ -1086,7 +1199,7 @@ export default function Admin() {
                                     </span>
                                     <span className="text-caption text-outline mt-0.5">
                                         Se almacenará en{' '}
-                                        <code className="text-secondary font-mono">s3://sugoianime-media/catalogo/</code>
+                                        <code className="text-secondary font-mono">s3://sugoianime-media/demo/</code>
                                     </span>
                                     <input
                                         type="file"
@@ -1111,7 +1224,7 @@ export default function Admin() {
                                 <div className="flex items-center justify-between">
                                     <span className="text-label-md font-semibold text-on-surface flex items-center gap-2">
                                         <span className="material-symbols-outlined text-secondary text-[18px]">
-                                            folder_Managed
+                                            folder_open
                                         </span>
                                         Opción B: Elegir archivo ya existente en el bucket S3 ({videosS3.length})
                                     </span>
@@ -1128,6 +1241,7 @@ export default function Admin() {
                                 <div className="space-y-2 max-h-[260px] overflow-y-auto pr-1 custom-scrollbar">
                                     {videosS3.map((v) => {
                                         const seleccionado = formEpisodio.videoKey === v.key
+                                        const bytes = v.tamanoBytes ?? v.size ?? 0
                                         return (
                                             <div
                                                 key={v.key}
@@ -1153,7 +1267,7 @@ export default function Admin() {
                                                             {v.key}
                                                         </div>
                                                         <div className="text-[11px] text-outline">
-                                                            {(v.size / (1024 * 1024)).toFixed(2)} MB
+                                                            {(bytes / (1024 * 1024)).toFixed(2)} MB
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1220,7 +1334,7 @@ export default function Admin() {
                                                 {Array.from(
                                                     {
                                                         length: Math.max(
-                                                            animeSeleccionadoObj?.numeroEpisodios || 24,
+                                                            totalEpisodiosSugeridos || 24,
                                                             24
                                                         ),
                                                     },
@@ -1277,17 +1391,17 @@ export default function Admin() {
                                                 Duración (seg)
                                             </label>
                                             <span className="text-[11px] text-outline">
-                                                ≈ {Math.round((formEpisodio.duracionSegundos || 1440) / 60)} min
+                                                ≈ {Math.round((formEpisodio.duracionSeg || 1440) / 60)} min
                                             </span>
                                         </div>
                                         <input
                                             type="number"
                                             min="1"
-                                            value={formEpisodio.duracionSegundos}
+                                            value={formEpisodio.duracionSeg}
                                             onChange={(e) =>
                                                 setFormEpisodio({
                                                     ...formEpisodio,
-                                                    duracionSegundos: e.target.value,
+                                                    duracionSeg: e.target.value,
                                                 })
                                             }
                                             className="w-full px-3.5 py-2.5 bg-surface-container-lowest border border-outline-variant/50 rounded-xl text-on-surface text-label-md font-mono"
@@ -1408,7 +1522,7 @@ export default function Admin() {
                                         <tr className="bg-surface-container/70 border-b border-outline-variant/25 text-label-sm text-outline uppercase tracking-wider">
                                             <th className="py-3.5 px-6">#</th>
                                             <th className="py-3.5 px-4">Título</th>
-                                            <th className="py-3.5 px-4">Video Key (S3)</th>
+                                            <th className="py-3.5 px-4">Duración</th>
                                             <th className="py-3.5 px-4">Licencia</th>
                                             <th className="py-3.5 px-6 text-right">Acciones</th>
                                         </tr>
@@ -1426,14 +1540,12 @@ export default function Admin() {
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <div className="font-semibold text-on-surface">{ep.titulo}</div>
-                                                    <div className="text-caption text-outline">
-                                                        {Math.round((ep.duracionSegundos || 1440) / 60)} min
-                                                    </div>
                                                 </td>
-                                                <td className="py-4 px-4">
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-surface-container-lowest border border-outline-variant/30 font-mono text-caption text-secondary">
-                                                        {ep.videoKey || 'Configurado en S3'}
-                                                    </span>
+                                                <td className="py-4 px-4 text-on-surface-variant">
+                                                    {Math.round(
+                                                        (ep.duracionSeg ?? ep.duracionSegundos ?? 1440) / 60
+                                                    )}{' '}
+                                                    min
                                                 </td>
                                                 <td className="py-4 px-4">
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-tertiary/15 text-tertiary text-label-sm">
@@ -1540,7 +1652,6 @@ export default function Admin() {
 
                     {/* ACCOUNTS MANAGEMENT PANEL */}
                     <section className="bg-surface-container-low border border-outline-variant/25 rounded-2xl shadow-2xl overflow-hidden">
-                        {/* Section Header & Search/Filter Bar */}
                         <div className="p-5 sm:p-6 border-b border-outline-variant/20 flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-surface-container/50">
                             <div>
                                 <h2 className="font-title-card text-xl font-bold text-on-surface flex items-center gap-2.5">
@@ -1572,8 +1683,8 @@ export default function Admin() {
                                     className="px-3.5 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-label-md text-on-surface-variant"
                                 >
                                     <option value="">Todos los roles</option>
-                                    <option value="ROLE_ADMIN">Rol: ADMIN</option>
-                                    <option value="ROLE_USUARIO">Rol: USUARIO</option>
+                                    <option value="ADMIN">Rol: ADMIN</option>
+                                    <option value="USUARIO">Rol: USUARIO</option>
                                 </select>
 
                                 <select
@@ -1588,7 +1699,6 @@ export default function Admin() {
                             </div>
                         </div>
 
-                        {/* Data Table */}
                         <div className="overflow-x-auto">
                             <table className="w-full text-left border-collapse">
                                 <thead>
@@ -1604,7 +1714,9 @@ export default function Admin() {
                                 </thead>
                                 <tbody className="divide-y divide-outline-variant/15 text-label-md">
                                     {usuariosFiltrados.map((u) => {
-                                        const esAdminUser = u.roles?.includes('ROLE_ADMIN')
+                                        const esAdminUser =
+                                            u.roles?.includes('ADMIN') ||
+                                            u.roles?.includes('ROLE_ADMIN')
                                         const esPremium = u.tipoSuscripcion === 'PREMIUM'
                                         const iniciales = (u.nombre || u.email || 'U')
                                             .split(' ')
