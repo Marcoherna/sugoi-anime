@@ -227,7 +227,7 @@ export default function DetalleAnime() {
                                         <>
                                             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-tertiary/15 border border-tertiary/30 text-tertiary font-semibold">
                                                 <span className="material-symbols-outlined text-base icon-filled">star</span>
-                                                <span>★ {Number(anime.puntuacion).toFixed(2)}</span>
+                                                <span>{Number(anime.puntuacion).toFixed(2)}</span>
                                             </div>
                                             <span className="text-outline-variant">•</span>
                                         </>
@@ -311,7 +311,7 @@ export default function DetalleAnime() {
                                         >
                                             favorite
                                         </span>
-                                        <span>{esFavorito ? '♥ En favoritos' : '♡ Agregar a favoritos'}</span>
+                                        <span>{esFavorito ? 'En favoritos' : 'Agregar a favoritos'}</span>
                                     </button>
                                 ) : (
                                     <Link
