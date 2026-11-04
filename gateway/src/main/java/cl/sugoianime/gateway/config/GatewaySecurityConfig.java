@@ -69,8 +69,9 @@ public class GatewaySecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/api/catalogo/animes/**").permitAll()
                         .pathMatchers(HttpMethod.GET, "/api/catalogo/episodios/**").permitAll()
 
-                        // Administracion del catalogo: solo rol ADMIN
+                        // Administracion del catalogo y cuentas: solo rol ADMIN
                         .pathMatchers("/api/catalogo/admin/**").hasRole("ADMIN")
+                        .pathMatchers("/api/auth/admin/**").hasRole("ADMIN")
 
                         // Todo lo demas exige token valido
                         .anyExchange().authenticated())

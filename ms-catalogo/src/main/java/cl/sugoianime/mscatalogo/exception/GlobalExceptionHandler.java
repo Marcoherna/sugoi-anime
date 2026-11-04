@@ -50,6 +50,14 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.de(400, "Bad Request", mensaje, req.getRequestURI()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> manejarArgumentoInvalido(
+            IllegalArgumentException ex, HttpServletRequest req) {
+
+        return ResponseEntity.badRequest()
+                .body(ErrorResponse.de(400, "Bad Request", ex.getMessage(), req.getRequestURI()));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> manejarInesperado(
             Exception ex, HttpServletRequest req) {

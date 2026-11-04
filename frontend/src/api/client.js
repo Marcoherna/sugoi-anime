@@ -71,7 +71,7 @@ async function refrescarToken() {
 async function ejecutar(ruta, opciones = {}, reintentar = true) {
     const cabeceras = { ...(opciones.headers || {}) }
 
-    if (opciones.body && !cabeceras['Content-Type']) {
+    if (opciones.body && !(opciones.body instanceof FormData) && !cabeceras['Content-Type']) {
         cabeceras['Content-Type'] = 'application/json'
     }
 
@@ -117,4 +117,5 @@ export const api = {
     put:    (ruta, datos, opciones) => ejecutar(ruta, { ...opciones, method: 'PUT',
         body: datos ? JSON.stringify(datos) : undefined }),
     delete: (ruta, opciones)        => ejecutar(ruta, { ...opciones, method: 'DELETE' }),
+    upload: (ruta, formData, opciones) => ejecutar(ruta, { ...opciones, method: 'POST', body: formData }),
 }

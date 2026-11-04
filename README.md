@@ -174,6 +174,16 @@ flowchart TB
 - **Regla de Integridad de Cuenta:** El sistema impide eliminar el último perfil restante de una cuenta (`409 Conflict`), garantizando que toda cuenta mantenga al menos un perfil operativo.
 - **Selector Interactivo en Frontend (`/perfiles`):** Vista dedicada para elegir quién está viendo, crear nuevos perfiles (normales o infantiles) y administrar los existentes.
 
+### RF-10: Panel de Administración (Series, Capítulos AWS S3 y Cuentas)
+- **Gestión de Series (`/admin`):** Creación, edición y eliminación de series en el catálogo con asignación de géneros para el motor de similitud de coseno, además de disparo manual de sincronización con Jikan API y traducción con LibreTranslate.
+- **Carga y Gestión de Capítulos con AWS S3 (`sugoianime-media`):**
+  - **Subida Directa `.mp4` a AWS S3:** Implementación nativa en Java 25 ([`S3StorageService.java`](file:///home/maha/Proyectos/sugoi-anime/ms-catalogo/src/main/java/cl/sugoianime/mscatalogo/service/S3StorageService.java)) con firma criptográfica **AWS Signature Version 4 (`HMAC-SHA256`)** para subir videos `.mp4` directamente al bucket y calcular automáticamente su duración en el navegador.
+  - **Explorador de Objetos S3:** Listado en tiempo real de los archivos `.mp4` existentes en el bucket S3 para asociarlos con un clic a cualquier capítulo junto con su licencia obligatoria (Ley N° 17.336).
+- **Administración de Cuentas de Usuario (`ms-auth`):** Listado de cuentas registradas, activación/bloqueo con revocación inmediata de sesiones (`RefreshToken`), cambio de roles (`USUARIO` / `ADMIN`), conmutación de plan `Premium` y eliminación de cuentas con protección contra auto-bloqueo.
+- **Administrador Semilla Automático:** Al iniciar `ms-auth`, [`AdminDataInitializer.java`](file:///home/maha/Proyectos/sugoi-anime/ms-auth/src/main/java/cl/sugoianime/msauth/config/AdminDataInitializer.java) aprovisiona automáticamente la cuenta administradora por defecto si no existe:
+  - **Email:** `admin@sugoianime.cl`
+  - **Contraseña:** `Admin1234!`
+
 ---
 
 ## ⚖️ Cumplimiento Normativo y Legal (Chile)
@@ -264,6 +274,20 @@ Todas las peticiones externas e internas del cliente se canalizan a través del 
 | `GET` | `/api/catalogo/episodios/{id}/reproduccion` | Público | `id` (path) | URL de CDN, duración y licencia de streaming (RF-02, Ley 17.336). |
 | `POST` | `/api/catalogo/admin/sincronizar` | `ROLE_ADMIN` | `paginas` (default: 2) | Disparo manual de sincronización con Jikan API (RF-04). |
 | `POST` | `/api/catalogo/admin/traducir` | `ROLE_ADMIN` | — | Disparo manual de traducción de sinopsis pendientes (RF-05). |
+| `POST` | `/api/catalogo/admin/animes` | `ROLE_ADMIN` | `CrearAnimeRequest` (JSON) | Crea una nueva serie en el catálogo con sus géneros. |
+| `PUT` | `/api/catalogo/admin/animes/{id}` | `ROLE_ADMIN` | `id`, `CrearAnimeRequest` | Edita los metadatos, portada y géneros de una serie. |
+| `DELETE` | `/api/catalogo/admin/animes/{id}` | `ROLE_ADMIN` | `id` (path) | Elimina una serie y sus capítulos asociados. |
+| `POST` | `/api/catalogo/admin/episodios` | `ROLE_ADMIN` | `CrearEpisodioRequest` (JSON) | Crea o actualiza un capítulo (número, `videoKey`, licencia). |
+| `DELETE` | `/api/catalogo/admin/episodios/{id}` | `ROLE_ADMIN` | `id` (path) | Elimina un capítulo de una serie. |
+| `GET` | `/api/catalogo/admin/s3/videos` | `ROLE_ADMIN` | — | Lista los archivos `.mp4` disponibles en el bucket AWS S3. |
+| `POST` | `/api/catalogo/admin/s3/upload` | `ROLE_ADMIN` | `archivo` (`MultipartFile`), `carpeta` | Sube un archivo `.mp4` directamente al bucket AWS S3 (`SigV4`). |
+
+### Administración de Cuentas (`/api/auth/admin/**`)
+| Método | Ruta | Acceso | Descripción |
+|---|---|:---:|---|
+| `GET` | `/api/auth/admin/usuarios` | `ROLE_ADMIN` | Lista todas las cuentas registradas con estado, roles y cantidad de perfiles. |
+| `PUT` | `/api/auth/admin/usuarios/{id}` | `ROLE_ADMIN` | Activa/bloquea una cuenta, modifica su estado `esPremium` o asigna/revoca el rol `ADMIN`. |
+| `DELETE` | `/api/auth/admin/usuarios/{id}` | `ROLE_ADMIN` | Elimina una cuenta de usuario y revoca sus tokens (protegido contra auto-eliminación). |
 
 ### Interacciones y Recomendaciones (`/api/interacciones/**`)
 | Método | Ruta | Acceso | Parámetros Clave | Descripción |

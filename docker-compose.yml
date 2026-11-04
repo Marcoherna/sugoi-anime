@@ -102,6 +102,10 @@ services:
       TRANSLATE_API_URL: http://libretranslate:5000/translate
       TRANSLATE_API_KEY: ${TRANSLATE_API_KEY:-}
       AWS_CLOUDFRONT_DOMAIN: ${AWS_CLOUDFRONT_DOMAIN}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_BUCKET: ${AWS_S3_BUCKET:-}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-}
     depends_on:
       db-catalogo: {condition: service_healthy}
       libretranslate: {condition: service_started}

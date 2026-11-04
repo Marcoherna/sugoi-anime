@@ -9,7 +9,6 @@ export function AuthProvider({ children }) {
     const [cargando, setCargando] = useState(true)
 
     // Al montar, si hay token guardado se recupera la sesion.
-    // Asi un F5 no obliga a volver a iniciar sesion.
     useEffect(() => {
         let activo = true
 
@@ -57,9 +56,24 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('sugoi_perfil_activo')
     }, [])
 
+    const esAdmin = Boolean(
+        usuario?.roles?.includes('ADMIN') || usuario?.roles?.includes('ROLE_ADMIN')
+    )
+
     return (
         <AuthContext.Provider
-            value={{ usuario, cargando, autenticado: !!usuario, login, registrar, logout }}>
+            value={{
+                usuario,
+                cargando,
+                autenticado: !!usuario,
+                estaAutenticado: !!usuario,
+                esAdmin,
+                login,
+                registrar,
+                logout,
+                cerrarSesion: logout,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     )

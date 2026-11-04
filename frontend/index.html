@@ -1,13 +1,90 @@
 <!doctype html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="SugoiAnime - Plataforma de streaming de anime" />
-  <title>SugoiAnime</title>
-</head>
-<body>
-<div id="root"></div>
-<script type="module" src="/src/main.jsx"></script>
-</body>
+<html class="dark" lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SugoiAnime — Plataforma de Streaming de Anime</title>
+    <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <!-- Material Symbols Outlined -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+      rel="stylesheet"
+    />
+    <!-- Tailwind CSS CDN with Obsidian Neon Cinematic Config -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'surface-container-lowest': '#0b0e14',
+              'surface-container-low': '#191c22',
+              'surface-container': '#1d2026',
+              'surface-container-high': '#272a31',
+              'surface-container-highest': '#32353c',
+              'surface-bright': '#373940',
+              'on-surface': '#e1e2ea',
+              'on-surface-variant': '#cbc3d7',
+              'outline': '#948da1',
+              'outline-variant': '#494455',
+              'primary': '#d0bcff',
+              'primary-container': '#a078ff',
+              'on-primary': '#3c0090',
+              'on-primary-container': '#34007f',
+              'secondary': '#adc6ff',
+              'secondary-container': '#0566d9',
+              'on-secondary-container': '#eeefff',
+              'tertiary': '#ffb95f',
+              'tertiary-container': '#dd901c',
+              'error': '#ffb4ab',
+              'error-container': '#93000a',
+              'on-error-container': '#ffdad6',
+            },
+            fontFamily: {
+              'display-hero': ['Plus Jakarta Sans', 'sans-serif'],
+              'headline-xl': ['Plus Jakarta Sans', 'sans-serif'],
+              'title-card': ['Plus Jakarta Sans', 'sans-serif'],
+              'label-md': ['Inter', 'sans-serif'],
+              'label-sm': ['Inter', 'sans-serif'],
+              'body-md': ['Inter', 'sans-serif'],
+              'caption': ['Inter', 'sans-serif'],
+              'mono': ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'monospace'],
+            },
+            fontSize: {
+              'display-hero': ['3.5rem', { lineHeight: '1.1', letterSpacing: '-0.02em', fontWeight: '800' }],
+              'headline-xl': ['1.75rem', { lineHeight: '1.25', letterSpacing: '-0.015em', fontWeight: '700' }],
+              'title-card': ['1.125rem', { lineHeight: '1.35', fontWeight: '600' }],
+              'label-md': ['0.875rem', { lineHeight: '1.4', fontWeight: '500' }],
+              'label-sm': ['0.75rem', { lineHeight: '1.4', letterSpacing: '0.02em', fontWeight: '600' }],
+              'body-md': ['1rem', { lineHeight: '1.6', fontWeight: '400' }],
+              'caption': ['0.8125rem', { lineHeight: '1.5', fontWeight: '400' }],
+            },
+            spacing: {
+              'space-xs': '0.25rem',
+              'space-sm': '0.5rem',
+              'space-md': '1rem',
+              'space-lg': '1.5rem',
+              'space-xl': '2.5rem',
+              'margin': '1rem',
+              'margin-tablet': '1.5rem',
+              'margin-desktop': '2rem',
+              'gutter': '1rem',
+              'gutter-desktop': '1.5rem',
+            },
+          },
+        },
+      }
+    </script>
+  </head>
+  <body class="bg-surface-container-lowest font-body-md text-on-surface antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col">
+    <div id="root" class="min-h-screen flex flex-col flex-1"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

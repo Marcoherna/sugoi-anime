@@ -40,8 +40,14 @@ public class AnimePersistenceService {
      */
     @Transactional
     public boolean guardarOActualizar(JikanAnimeDTO dto) {
+        boolean esNuevo = animeRepository.findByMalId(dto.malId()).isEmpty();
+        guardarOActualizarEntidad(dto);
+        return esNuevo;
+    }
+
+    @Transactional
+    public Anime guardarOActualizarEntidad(JikanAnimeDTO dto) {
         Optional<Anime> existente = animeRepository.findByMalId(dto.malId());
-        boolean esNuevo = existente.isEmpty();
 
         Anime anime = existente.orElseGet(
                 () -> Anime.builder().malId(dto.malId()).build());
@@ -63,14 +69,23 @@ public class AnimePersistenceService {
         // asi que la coleccion LAZY se inicializa sin problema.
         if (dto.genres() != null) {
             for (JikanAnimeDTO.JikanGeneroDTO g : dto.genres()) {
-                Genero genero = generoRepository.findByMalId(g.malId())
-                        .orElseGet(() -> generoRepository.save(
-                                Genero.builder().malId(g.malId()).nombre(g.name()).build()));
+                Optional<Genero> encontrado = (g.malId() != null && g.malId() > 0)
+                        ? generoRepository.findByMalId(g.malId())
+                        : Optional.empty();
+                if (encontrado.isEmpty() && g.name() != null) {
+                    encontrado = generoRepository.findByNombreIgnoreCase(g.name());
+                }
+                Genero genero = encontrado.orElseGet(() -> {
+                    int malIdGen = (g.malId() != null && g.malId() > 0)
+                            ? g.malId()
+                            : 1000 + Math.abs(g.name().hashCode() % 90000);
+                    return generoRepository.save(
+                            Genero.builder().malId(malIdGen).nombre(g.name()).build());
+                });
                 anime.getGeneros().add(genero);
             }
         }
 
-        animeRepository.save(anime);
-        return esNuevo;
+        return animeRepository.save(anime);
     }
 }

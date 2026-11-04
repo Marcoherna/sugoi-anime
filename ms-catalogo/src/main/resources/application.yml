@@ -36,6 +36,11 @@ spring:
     virtual:
       enabled: true             # Java 25: virtual threads para el servidor web
 
+  servlet:
+    multipart:
+      max-file-size: 500MB
+      max-request-size: 500MB
+
   http:
     client:
       connect-timeout: 5s
@@ -66,6 +71,12 @@ media:
   cdn-domain: ${AWS_CLOUDFRONT_DOMAIN:}
   # Fallback local mientras no exista CloudFront (desarrollo)
   base-url-local: http://localhost:8081/media
+
+aws:
+  region: ${AWS_REGION:us-east-1}
+  s3-bucket: ${AWS_S3_BUCKET:}
+  access-key-id: ${AWS_ACCESS_KEY_ID:}
+  secret-access-key: ${AWS_SECRET_ACCESS_KEY:}
 
 # ---------- Resiliencia (Riesgo R02) ----------
 resilience4j:
