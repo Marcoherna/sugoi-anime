@@ -218,6 +218,7 @@ public class RecomendacionService {
 
         // Reemplazo completo: las recomendaciones anteriores quedan obsoletas
         recomendacionRepository.deleteByPerfilId(perfilId);
+        recomendacionRepository.flush();
 
         List<Recomendacion> aGuardar = new ArrayList<>();
         for (int i = 0; i < mejores.size(); i++) {

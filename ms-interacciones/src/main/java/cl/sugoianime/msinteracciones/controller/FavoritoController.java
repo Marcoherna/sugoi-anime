@@ -83,7 +83,11 @@ public class FavoritoController {
         perfilGuard.verificarPropiedad(jwt, perfilId);
 
         FavoritoDTO creado = favoritoService.agregar(perfilGuard.usuarioIdDe(jwt), perfilId, animeId);
-        recomendacionService.regenerar(perfilId);
+        try {
+            recomendacionService.regenerar(perfilId);
+        } catch (Exception ex) {
+            // No bloquear el guardado del favorito si falla el recalculo de recomendaciones
+        }
 
         return ResponseEntity.status(HttpStatus.CREATED).body(creado);
     }
@@ -97,7 +101,11 @@ public class FavoritoController {
 
         perfilGuard.verificarPropiedad(jwt, perfilId);
         favoritoService.eliminar(perfilId, animeId);
-        recomendacionService.regenerar(perfilId);
+        try {
+            recomendacionService.regenerar(perfilId);
+        } catch (Exception ex) {
+            // No bloquear la eliminacion del favorito si falla el recalculo de recomendaciones
+        }
         return ResponseEntity.noContent().build();
     }
 

@@ -93,7 +93,6 @@ export default function DetalleAnime() {
                 await interaccionesApi.agregarFavorito(perfilActivo.id, id)
                 setEsFavorito(true)
             }
-            interaccionesApi.regenerarRecomendaciones(perfilActivo.id).catch(() => {})
         } catch (ex) {
             setError(ex.message)
         }

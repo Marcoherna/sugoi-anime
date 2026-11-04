@@ -40,7 +40,6 @@ export default function MisFavoritos() {
         if (!perfilActivo) return
         try {
             await interaccionesApi.quitarFavorito(perfilActivo.id, animeId)
-            interaccionesApi.regenerarRecomendaciones(perfilActivo.id).catch(() => {})
             setPagina((prev) => {
                 const listaActual = prev?.content || prev?.contenido || []
                 return {
