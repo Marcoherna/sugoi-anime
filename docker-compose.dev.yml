@@ -71,15 +71,6 @@ services:
       retries: 10
       start_period: 60s
 
-  # Esto es para los pagos
-  rabbitmq:
-    image: rabbitmq:4-management-alpine
-    container_name: sugoi-rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"   # consola web: guest/guest
-    profiles: ["pagos"]
-
 volumes:
   vol-db-auth:
   vol-db-catalogo:

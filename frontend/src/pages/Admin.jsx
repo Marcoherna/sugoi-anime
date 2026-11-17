@@ -59,7 +59,6 @@ export default function Admin() {
     const [usuarios, setUsuarios] = useState([])
     const [busquedaUsuario, setBusquedaUsuario] = useState('')
     const [filtroRol, setFiltroRol] = useState('')
-    const [filtroPlan, setFiltroPlan] = useState('')
 
     useEffect(() => {
         if (!esAdmin) {
@@ -403,19 +402,6 @@ export default function Admin() {
         }
     }
 
-    async function alternarSuscripcion(u) {
-        const nuevoTipo = u.tipoSuscripcion === 'PREMIUM' ? 'GRATUITA' : 'PREMIUM'
-        try {
-            const actualizado = await adminApi.actualizarUsuario(u.id, {
-                tipoSuscripcion: nuevoTipo,
-            })
-            setUsuarios((prev) => prev.map((item) => (item.id === u.id ? actualizado : item)))
-            mostrarAviso(`Suscripción de ${actualizado.email} cambiada a ${nuevoTipo}.`)
-        } catch (err) {
-            setError(err.message)
-        }
-    }
-
     async function borrarUsuario(u) {
         if (!window.confirm(`¿Eliminar permanentemente la cuenta de ${u.email}?`)) return
         try {
@@ -461,16 +447,13 @@ export default function Admin() {
                     (u.roles || []).includes(`ROLE_${limpio}`)
                 if (!tiene) return false
             }
-            if (filtroPlan && u.tipoSuscripcion !== filtroPlan) {
-                return false
-            }
             return true
         })
-    }, [usuarios, busquedaUsuario, filtroRol, filtroPlan])
+    }, [usuarios, busquedaUsuario, filtroRol])
 
     const kpiUsuarios = useMemo(() => {
         const total = usuarios.length
-        const premium = usuarios.filter((u) => u.tipoSuscripcion === 'PREMIUM').length
+        const activas = usuarios.filter((u) => u.activo).length
         const admins = usuarios.filter(
             (u) => u.roles?.includes('ADMIN') || u.roles?.includes('ROLE_ADMIN')
         ).length
@@ -478,7 +461,7 @@ export default function Admin() {
             (acc, u) => acc + Number(u.cantidadPerfiles || 0),
             0
         )
-        return { total, premium, admins, perfiles }
+        return { total, activas, admins, perfiles }
     }, [usuarios])
 
     if (cargando) return <Cargando texto="Cargando panel de administración..." />
@@ -1610,14 +1593,14 @@ export default function Admin() {
                         <div className="bg-surface-container-low border border-outline-variant/20 rounded-xl p-4 flex items-center justify-between">
                             <div>
                                 <p className="text-label-sm uppercase tracking-wider text-outline">
-                                    Cuentas Premium
+                                    Cuentas Activas
                                 </p>
-                                <p className="font-headline-xl text-2xl font-bold text-tertiary mt-1">
-                                    {kpiUsuarios.premium}
+                                <p className="font-headline-xl text-2xl font-bold text-emerald-400 mt-1">
+                                    {kpiUsuarios.activas}
                                 </p>
                             </div>
-                            <div className="w-11 h-11 rounded-xl bg-tertiary/15 border border-tertiary/25 flex items-center justify-center text-tertiary">
-                                <span className="material-symbols-outlined">workspace_premium</span>
+                            <div className="w-11 h-11 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400">
+                                <span className="material-symbols-outlined">verified_user</span>
                             </div>
                         </div>
 
@@ -1659,7 +1642,7 @@ export default function Admin() {
                                     Cuentas registradas ({usuariosFiltrados.length})
                                 </h2>
                                 <p className="text-caption text-on-surface-variant mt-0.5">
-                                    Control de estados de cuenta, planes de suscripción y asignación de roles de seguridad.
+                                    Control de estados de cuenta, perfiles y asignación de roles de seguridad.
                                 </p>
                             </div>
 
@@ -1686,16 +1669,6 @@ export default function Admin() {
                                     <option value="ADMIN">Rol: ADMIN</option>
                                     <option value="USUARIO">Rol: USUARIO</option>
                                 </select>
-
-                                <select
-                                    value={filtroPlan}
-                                    onChange={(e) => setFiltroPlan(e.target.value)}
-                                    className="px-3.5 py-2 rounded-xl bg-surface-container-lowest border border-outline-variant/40 text-label-md text-on-surface-variant"
-                                >
-                                    <option value="">Todos los planes</option>
-                                    <option value="PREMIUM">Plan: Premium</option>
-                                    <option value="GRATUITA">Plan: Estándar</option>
-                                </select>
                             </div>
                         </div>
 
@@ -1706,7 +1679,6 @@ export default function Admin() {
                                         <th className="py-3.5 px-6 font-semibold">ID</th>
                                         <th className="py-3.5 px-4 font-semibold">Usuario</th>
                                         <th className="py-3.5 px-4 font-semibold">Estado</th>
-                                        <th className="py-3.5 px-4 font-semibold">Suscripción</th>
                                         <th className="py-3.5 px-4 font-semibold">Roles</th>
                                         <th className="py-3.5 px-4 font-semibold text-center">Perfiles</th>
                                         <th className="py-3.5 px-6 font-semibold text-right">Acciones</th>
@@ -1717,7 +1689,6 @@ export default function Admin() {
                                         const esAdminUser =
                                             u.roles?.includes('ADMIN') ||
                                             u.roles?.includes('ROLE_ADMIN')
-                                        const esPremium = u.tipoSuscripcion === 'PREMIUM'
                                         const iniciales = (u.nombre || u.email || 'U')
                                             .split(' ')
                                             .map((p) => p[0])
@@ -1762,26 +1733,13 @@ export default function Admin() {
                                                     )}
                                                 </td>
                                                 <td className="py-4 px-4">
-                                                    {esPremium ? (
-                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-label-sm bg-tertiary/15 text-tertiary border border-tertiary/30">
-                                                            <span className="material-symbols-outlined text-[14px]">
-                                                                workspace_premium
-                                                            </span>
-                                                            Premium
-                                                        </span>
-                                                    ) : (
-                                                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-label-sm bg-surface-container-highest text-on-surface-variant border border-outline-variant/30">
-                                                            Estándar
-                                                        </span>
-                                                    )}
-                                                </td>
-                                                <td className="py-4 px-4">
                                                     <div className="flex flex-wrap gap-1.5">
-                                                        {(u.roles || []).map((r) => {
-                                                            const limpio = r.replace('ROLE_', '')
-                                                            return (
+                                                        {(u.roles || [])
+                                                            .map((r) => r.replace('ROLE_', ''))
+                                                            .filter((limpio) => limpio !== 'PREMIUM')
+                                                            .map((limpio) => (
                                                                 <span
-                                                                    key={r}
+                                                                    key={limpio}
                                                                     className={`px-2 py-0.5 rounded text-label-sm ${
                                                                         limpio === 'ADMIN'
                                                                             ? 'bg-primary/20 text-primary border border-primary/40'
@@ -1790,8 +1748,7 @@ export default function Admin() {
                                                                 >
                                                                     {limpio}
                                                                 </span>
-                                                            )
-                                                        })}
+                                                            ))}
                                                     </div>
                                                 </td>
                                                 <td className="py-4 px-4 text-center">
@@ -1814,13 +1771,6 @@ export default function Admin() {
                                                             className="px-2.5 py-1.5 rounded-lg bg-secondary/15 hover:bg-secondary/25 text-secondary text-label-sm border border-secondary/30 transition-colors"
                                                         >
                                                             {esAdminUser ? 'Quitar Admin' : 'Hacer Admin'}
-                                                        </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => alternarSuscripcion(u)}
-                                                            className="px-2.5 py-1.5 rounded-lg bg-tertiary/15 hover:bg-tertiary/25 text-tertiary text-label-sm border border-tertiary/30 transition-colors"
-                                                        >
-                                                            {esPremium ? 'Quitar Premium' : 'Dar Premium'}
                                                         </button>
                                                         <button
                                                             type="button"
